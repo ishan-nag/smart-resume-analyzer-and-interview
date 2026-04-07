@@ -578,11 +578,11 @@ Returns:
 |---|---|---|---|
 | Parse resume | resume_parser | 1 | Once per session |
 | Get all roles | job_roles | 0 | Once per session |
-| Analyze per role | resume_analyzer | 1 per role | Per role selected |
+| Validate role selection | shared/validators | 0 | Once per session |
+| Analyze per role | resume_analyzer | 1 per role | Per role selected (max 3) |
 | Global upgrade tip | resume_analyzer | 1 | Once after all roles |
 | Generate Questions | mock_interview | 1 per section | Per interview type selected |
 | Evaluate Answers | mock_interview | 1 per section | Per interview type selected |
-| **Example Flow Total** | | **6** | (Parse + 2 Roles Analyzed + 1 Tip + 1 Q-Gen + 1 Eval) |
 
 **Groq Free Tier limits (llama-3.3-70b-versatile):**
 
@@ -592,7 +592,35 @@ Returns:
 | Requests per minute | 30 |
 | Tokens per day | 100,000 |
 
-At 6 calls per session, the free tier supports ~166 full sessions per day comfortably.
+### Why the 3-Role Cap Matters
+
+Without a role cap, a single user could select all 28 roles and consume 30+ API calls in one session — burning through the free tier budget for everyone.
+
+**Before (no role cap) — worst case: user picks all 28 roles:**
+
+| Mode | API Calls per Session | Sessions/Day (free tier) |
+|---|---|---|
+| Mode 1 — Analysis only (28 roles) | 30 | ~33 |
+| Mode 3 — Both (28 roles + 3 interview types) | 36 | ~27 |
+
+**After (3-role cap) — maximum possible:**
+
+| Mode | API Calls per Session | Sessions/Day (free tier) |
+|---|---|---|
+| Mode 1 — Analysis only (3 roles) | 5 | ~200 |
+| Mode 2 — Interview only (3 types) | 7 | ~142 |
+| Mode 3 — Both (3 roles + 3 interview types) | 11 | ~90 |
+
+**Impact summary:**
+
+| Metric | Before (no cap) | After (3-role cap) | Improvement |
+|---|---|---|---|
+| Max calls per session (Mode 3) | 36 | **11** | **70% fewer calls** |
+| Max calls per session (Mode 1) | 30 | **5** | **83% fewer calls** |
+| Users/day (Mode 3) | ~27 | **~90** | **3.3× more users** |
+| Users/day (Mode 1) | ~33 | **~200** | **6× more users** |
+
+> In practice, most candidates pick 1–2 roles, so you can realistically serve **150+ sessions/day** on the free tier.
 
 ---
 
