@@ -1,4 +1,4 @@
-# Smart Mock Interview Tool — AI Module
+# Smart Mock Interview and Resume Analyzer Tool — AI Module
 
 The AI module handles four things: parsing resumes, generating interview questions, scoring resumes against job descriptions, and evaluating candidate answers. It's written in Python and uses the Groq API for LLM calls.
 
@@ -278,15 +278,33 @@ Every AI function returns a plain Python dict. Serialize it with `json.dumps()` 
 The backend integration flow is:
 
 ```
-1. parse_resume(pdf_path)                        → parsed_resume       [1 LLM call]
-2. get_all_roles()                               → roles list          [0 LLM calls]
-3. for each role_id: analyze_resume(parsed_resume, role_id)
-                                                 → role_result         [1 LLM call each]
-4. generate_upgrade_tip(all_role_results, parsed_resume)
-                                                 → upgrade_tip         [1 LLM call]
-5. best_match = max(all_role_results,
-       key=lambda r: r["ats"]["overall_score"])  → best match role     [0 LLM calls]
-6. Return full JSON to frontend
+    1. parse_resume(pdf_path)                        → parsed_resume       [1 LLM call]
+    2. get_all_roles()                               → roles list          [0 LLM calls]
+    3. for each role_id: analyze_resume(parsed_resume, role_id)
+                                                     → role_result         [1 LLM call each]
+    4. generate_upgrade_tip(all_role_results, parsed_resume)
+                                                     → upgrade_tip         [1 LLM call]
+    5. best_match = max(all_role_results,
+           key=lambda r: r["ats"]["overall_score"])  → best match role     [0 LLM calls]
+    6. Return full JSON to frontend
+
+---
+
+### THREE CANDIDATE FLOWS
+
+You must support three different modes using the functions provided below:
+
+**Mode 1 — Resume Analysis only**
+* Upload PDF → `parse_resume` → Select role(s) → `analyze_resume` (for selected roles) → `generate_upgrade_tip` → show ATS score, feedback, and upgrade tip.
+
+**Mode 2 — Interview only**
+* Upload PDF (required gate) → `parse_resume` → Select role → Select interview types (`"behavioural"`, `"technical"`, `"domain-specific"`) → `generate_interview_questions` for each type selected (5 questions per section) → frontend shows all text input fields to the candidate.
+* Once candidate submits all answers → `evaluate_interview_answers` for each section → Full feedback report shown at the end. (No mid-interview interruptions!)
+
+**Mode 3 — Both at once**
+* Upload PDF → `parse_resume` → Select role & desired interview types → `analyze_resume` runs.
+* Once analysis is complete, interview starts automatically via `generate_interview_questions` → User answers questions → `evaluate_interview_answers`.
+* Output is a combined final report.
 ```
 
 ---
@@ -441,6 +459,82 @@ result = score_resume(parsed_resume, job_description="We are looking for...")
 
 ---
 
+### 6. Mock Interview (Question Generator)
+
+Generates 5 personalized questions based on the candidate's resume and selected role. Do this once per selected section type.
+
+```python
+from mock_interview import generate_interview_questions
+
+result = generate_interview_questions(
+    parsed_resume=parsed_resume,
+    role_id="ml_engineer",
+    interview_type="behavioural" # or "technical", "domain-specific"
+)
+```
+
+Returns:
+```json
+{
+    "status": "success",
+    "questions": [
+        "Tell me about a time you had to resolve a conflict...",
+        "Question 2...",
+        "Question 3...",
+        "Question 4...",
+        "Question 5..."
+    ]
+}
+```
+
+**API calls: 1 per interview section**
+
+---
+
+### 7. Mock Interview (Answer Evaluator)
+
+Evaluates the 5 candidate answers for a specific interview section and provides detailed feedback and scoring. Do this after they submit all answers for a section.
+
+```python
+from mock_interview import evaluate_interview_answers
+
+# Build the payload based on the candidate's inputs
+qa_list = [
+    {"question": "Tell me about a time...", "answer": "I once had a coworker..."},
+    # ... exactly 5 objects
+]
+
+result = evaluate_interview_answers(
+    role_id="ml_engineer",
+    interview_type="behavioural",
+    questions_and_answers=qa_list
+)
+```
+
+Returns:
+```json
+{
+    "status": "success",
+    "evaluation": {
+        "overall_score": 85,
+        "overall_summary": "Good effort overall...",
+        "evaluations": [
+            {
+                "question_number": 1,
+                "question": "Tell me about a time...",
+                "score_out_of_10": 8,
+                "feedback": "You answered this clearly...",
+                "ideal_answer": "A perfect answer would have..."
+            }
+        ]
+    }
+}
+```
+
+**API calls: 1 per interview section**
+
+---
+
 ## API Call Budget
 
 | Step | Module | Calls | Frequency |
@@ -449,7 +543,9 @@ result = score_resume(parsed_resume, job_description="We are looking for...")
 | Get all roles | job_roles | 0 | Once per session |
 | Analyze per role | resume_analyzer | 1 per role | Per role selected |
 | Global upgrade tip | resume_analyzer | 1 | Once after all roles |
-| **Total (4 roles)** | | **6** | |
+| Generate Questions | mock_interview | 1 per section | Per interview type selected |
+| Evaluate Answers | mock_interview | 1 per section | Per interview type selected |
+| **Total (Analysis + 1 Interview Section)** | | **4 total** | |
 
 **Groq Free Tier limits (llama-3.3-70b-versatile):**
 
@@ -501,6 +597,11 @@ project-ai/
 ├── job_roles/
 │   ├── __init__.py
 │   └── job_roles.py
+├── mock_interview/
+│   ├── __init__.py
+│   ├── evaluator.py
+│   ├── generator.py
+│   └── prompt_templates.py
 ├── output/                   ← auto-generated, gitignored
 ├── resume_analyzer/
 │   ├── __init__.py
@@ -560,4 +661,4 @@ The FastAPI `main.py` will be added at deployment time — it is not part of the
 ---
 
 **GitHub:** https://github.com/ishan-nag/smart-resume-analyzer  
-**Last Updated:** Session 4 complete — resume analyzer module done.
+**Last Updated:** Session 5 complete — Mock Interview module done.
