@@ -646,6 +646,170 @@ This AI module is completely stateless between sessions. There is no accumulated
 
 ---
 
+## End-to-End Flow — AI Module Only
+
+This is the internal flow of the Python AI module. All functions are called from `project-ai/` root.
+
+### Mode 1 — Resume Analysis Only
+
+```
+PDF File
+  │
+  ▼
+parse_resume(pdf_path)                  ─── 1 LLM call
+  │  Returns: parsed_resume dict
+  ▼
+get_all_roles()                         ─── 0 LLM calls
+  │  Returns: list of 28 roles (from local JSON)
+  ▼
+User selects role(s)
+  │
+  ▼
+┌─ FOR EACH selected role ──────────────────────────┐
+│  analyze_resume(parsed_resume, role_id)            │
+│      → ATS score, skills gap, quality, feedback    │
+│      → 1 LLM call per role                         │
+└────────────────────────────────────────────────────┘
+  │
+  ▼
+generate_upgrade_tip(all_role_results, parsed_resume)  ─── 1 LLM call
+  │  Returns: single upgrade tip paragraph
+  ▼
+Final JSON → ATS scores + feedback + upgrade tip
+```
+
+### Mode 2 — Interview Only
+
+```
+PDF File (required gate — resume must be parsed first)
+  │
+  ▼
+parse_resume(pdf_path)                  ─── 1 LLM call
+  │  Returns: parsed_resume dict
+  ▼
+User selects 1 role + interview types
+  (behavioural / technical / domain-specific)
+  │
+  ▼
+┌─ FOR EACH selected interview type ─────────────────┐
+│  generate_interview_questions(                      │
+│      parsed_resume, role_id, interview_type)        │
+│      → 5 focused questions                          │
+│      → 1 LLM call per type                          │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+Candidate answers all questions (text only, no interruptions)
+  │
+  ▼
+┌─ FOR EACH interview type ──────────────────────────┐
+│  evaluate_interview_answers(                        │
+│      role_id, interview_type, questions_and_answers) │
+│      → score per question + overall score + feedback │
+│      → 1 LLM call per type                          │
+└─────────────────────────────────────────────────────┘
+  │
+  ▼
+Full feedback report shown at end
+```
+
+### Mode 3 — Both at Once
+
+```
+PDF File
+  │
+  ▼
+parse_resume(pdf_path)                  ─── 1 LLM call
+  │
+  ▼
+User selects 1 role + interview types
+  │
+  ├──► Resume Analysis runs first:
+  │      analyze_resume(parsed_resume, role_id)        ─── 1 LLM call
+  │      generate_upgrade_tip(results, parsed_resume)  ─── 1 LLM call
+  │
+  │    Analysis complete, interview starts automatically:
+  │
+  ├──► generate_interview_questions (per type)         ─── 1 LLM call each
+  │      → Candidate answers all questions
+  │
+  └──► evaluate_interview_answers (per type)           ─── 1 LLM call each
+         │
+         ▼
+    Combined Final Report
+      ├── ATS score + skills gap + quality + section feedback
+      ├── Upgrade tip
+      └── Interview scores + per-question feedback + ideal answers
+```
+
+---
+
+## End-to-End Flow — Full Project (Frontend + Backend + AI)
+
+This is how the three layers talk to each other at runtime.
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (Vercel)                          │
+│                                                                   │
+│  1. User uploads PDF resume                                       │
+│  2. User picks a mode: Analysis / Interview / Both                │
+│  3. User selects role(s) and interview types                      │
+│  4. Sends HTTP requests to Backend                                │
+│  5. Displays results: scores, feedback, interview evaluation      │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │  HTTP (REST API)
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                   BACKEND (Render, Java Spring Boot)               │
+│                                                                   │
+│  1. Receives PDF + mode + role selection from Frontend             │
+│  2. Saves PDF temporarily                                         │
+│  3. Calls AI Module functions in sequence based on mode:           │
+│                                                                   │
+│     Mode 1: parse_resume → analyze_resume (loop) →                │
+│             generate_upgrade_tip → return JSON                    │
+│                                                                   │
+│     Mode 2: parse_resume → generate_interview_questions (loop) → │
+│             collect answers → evaluate_interview_answers (loop) → │
+│             return JSON                                           │
+│                                                                   │
+│     Mode 3: parse_resume → analyze_resume → upgrade_tip →         │
+│             generate_interview_questions → collect answers →      │
+│             evaluate_interview_answers → return combined JSON     │
+│                                                                   │
+│  4. Serializes AI output with json.dumps()                        │
+│  5. Sends final JSON response back to Frontend                    │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │  Python function calls (or HTTP
+                               │  via FastAPI wrapper at deployment)
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                   AI MODULE (Render, Python)                       │
+│                                                                   │
+│  resume_parser    → Extracts structured data from PDF             │
+│  job_roles        → Serves 28 roles from local JSON (0 API calls) │
+│  ats_scorer       → Scores resume vs role (used by analyzer)      │
+│  resume_analyzer  → Full analysis + upgrade tip generation        │
+│  mock_interview   → Question generation + answer evaluation       │
+│                                                                   │
+│  All functions return plain Python dicts.                          │
+│  All LLM calls go through shared/groq_client.py                   │
+│  All LLM calls have retry logic via shared/retry_handler.py       │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │  HTTPS
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                     GROQ API (External)                           │
+│                                                                   │
+│  Model: llama-3.3-70b-versatile                                   │
+│  Free tier: 1,000 req/day · 30 req/min · 100K tokens/day         │
+│  Stateless — no candidate data is stored by Groq                  │
+└───────────────────────────────────────────────────────────────────┘
+```
+
+---
+
 ## Deployment Notes
 
 At deployment time, the AI module will run as a separate Python service on Render with a FastAPI wrapper (`main.py`). The Spring Boot backend will call it via HTTP.
