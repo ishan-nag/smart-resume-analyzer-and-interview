@@ -433,6 +433,7 @@ if "error" in result:
 - ❌ Do NOT allow more than 3 roles — always call `validate_role_selection` first.
 - ❌ Do NOT call `generate_upgrade_tip` per role — call it ONCE after all roles are done.
 - ❌ Do NOT show interview feedback mid-interview — collect ALL answers first, THEN evaluate.
+- ❌ **Do NOT use async/parallel threads for LLM calls.** Mode 3 takes time, but hitting Groq with multiple requests at the exact same millisecond will trigger a `429 Too Many Requests` error on the free tier. Keep all AI function calls STRICTLY sequential.
 
 ---
 
@@ -574,7 +575,7 @@ if "error" in result:
 - **No mid-interview feedback** — do NOT show scores or feedback after each answer. Collect ALL answers across ALL types, send to backend as one batch, then show the full feedback report.
 - **Accumulate answers in a dict** — as the candidate answers each question, store it in a dict grouped by interview type: `{"behavioural": [{q, a}, ...], "technical": [...], ...}`. Send this dict to the backend after the last question.
 - **Interview answers are text only** — provide a `<textarea>` input, no audio/video.
-- **Loading states** — LLM calls take 2-5 seconds each. Show a spinner/skeleton.
+- **Dynamic Loading Text (Crucial for Demo/UX)** — Because complex flows (like Mode 3) make several sequential LLM calls, it can take 15–30 seconds. To make it feel fast, show a spinner whose text changes every few seconds. (e.g., *0s:* "Extracting resume data...", *4s:* "Matching against ATS algorithms...", *8s:* "Generating tailored interview questions...", *12s:* "Finalizing report..."). Do not just show a static "Loading..." screen.
 - **Error messages** — if the backend returns an error, display it to the user. For scanned PDFs, suggest these tools: [smallpdf.com](https://www.smallpdf.com), [ilovepdf.com](https://www.ilovepdf.com), [online2pdf.com](https://online2pdf.com)
 
 ---
