@@ -138,24 +138,29 @@ quality scores, section-by-section feedback, and a global upgrade tip.
 
 ```
 User uploads PDF (required — we need their background) → Selects 1 role →
-Selects interview types (behavioural / technical / domain-specific) →
-Gets 5 questions per type → Answers all questions via text →
+Selects interview types (can pick ALL 3: behavioural + technical + domain-specific) →
+Gets questions ONE AT A TIME (5 per type, up to 15 total) →
+Answers each question before the next one appears →
 Gets full feedback report with scores, feedback per question, and ideal answers.
 ```
 
 **No resume analysis. Just interview practice.**
 
-**Important:** The candidate answers ALL questions first, THEN sees ALL feedback at the end. There are NO interruptions mid-interview.
+**Important — Sequential Question Flow:**
+- The candidate sees **one question at a time**. They must answer Q1 before Q2 appears.
+- Questions flow through all selected types in order: e.g., Behavioural Q1→Q5, then Technical Q1→Q5, then Domain Q1→Q5.
+- Answers are accumulated in a dict grouped by interview type.
+- Feedback is shown **only after ALL questions across ALL types are answered**. There are NO interruptions mid-interview.
 
 ### Mode 3 — Both at Once
 
 > "I want the full experience — analyze my resume AND interview me."
 
 ```
-User uploads PDF → Selects 1 role + interview types →
+User uploads PDF → Selects 1 role + interview types (can pick all 3) →
 Resume analysis runs first → Interview starts automatically after →
-User answers all questions → Gets a combined final report with both
-resume analysis results AND interview feedback.
+Questions appear one at a time → User answers each before next appears →
+Gets a combined final report with both resume analysis results AND interview feedback.
 ```
 
 ---
@@ -330,13 +335,14 @@ check = validate_parsed_resume(parsed_resume)
 if not check["valid"]:
     return HTTP_400(check["error"])
 
-# 2. Validate interview types
+# 2. Validate interview types (candidate can select all 3)
 check = validate_interview_types(selected_interview_types)
 if not check["valid"]:
     return HTTP_400(check["error"])
 
-# 3. Generate questions for each selected type
-all_questions = {}
+# 3. Generate questions for ALL selected types upfront
+#    This builds the full question pool before the interview begins.
+all_questions = {}  # {"behavioural": [q1..q5], "technical": [q1..q5], ...}
 for interview_type in selected_interview_types:
     result = generate_interview_questions(parsed_resume, role_id, interview_type)
     if result["status"] == "success":
@@ -344,19 +350,43 @@ for interview_type in selected_interview_types:
     else:
         return HTTP_500(result["error"])
 
-# 4. Send questions to frontend — frontend collects answers
-return {"questions": all_questions}
+# 4. Build a flat ordered list for sequential display
+#    Frontend will show these ONE AT A TIME.
+sequential_questions = []
+for interview_type in selected_interview_types:
+    for i, question in enumerate(all_questions[interview_type]):
+        sequential_questions.append({
+            "interview_type": interview_type,
+            "question_number": i + 1,
+            "question": question
+        })
 
-# ──────────── LATER, when frontend sends back answers ────────────
+# 5. Send to frontend — frontend shows Q1, waits for answer, shows Q2, etc.
+return {
+    "questions": all_questions,             # grouped by type (for evaluation later)
+    "sequential_questions": sequential_questions,  # flat ordered list (for display)
+    "total_questions": len(sequential_questions)
+}
 
-# 5. Evaluate answers for each type
+# ──────────── LATER, when frontend sends back ALL answers ────────────
+#
+# Frontend accumulates answers in a dict grouped by type:
+# {
+#     "behavioural": [{"question": "Q1?", "answer": "..."}, ...],
+#     "technical":   [{"question": "Q1?", "answer": "..."}, ...],
+#     "domain-specific": [{"question": "Q1?", "answer": "..."}, ...]
+# }
+#
+# This is sent to backend ONLY after ALL questions are answered.
+
+# 6. Evaluate answers for each type
 all_evaluations = {}
 for interview_type, qa_list in submitted_answers.items():
     result = evaluate_interview_answers(role_id, interview_type, qa_list)
     if result["status"] == "success":
         all_evaluations[interview_type] = result["evaluation"]
 
-# 6. Return full feedback report
+# 7. Return full feedback report
 return {"mode": "interview", "evaluations": all_evaluations}
 ```
 
@@ -416,8 +446,8 @@ if "error" in result:
 |---|---|
 | **Landing / Upload** | File upload (PDF only) + mode selector (Analysis / Interview / Both) |
 | **Role Selection** | Dropdown or card grid of roles — max 3 selectable for analysis, 1 for interview |
-| **Interview Type Selection** | Checkboxes: Behavioural, Technical, Domain-specific (Mode 2 & 3 only) |
-| **Interview Questions** | Display 5 questions per section with text input fields for answers |
+| **Interview Type Selection** | Checkboxes: Behavioural, Technical, Domain-specific — **candidate can select all 3** (Mode 2 & 3 only) |
+| **Interview Questions** | Display questions **one at a time** — candidate answers current question before next appears. Show progress indicator (e.g., "Question 3 of 15"). Up to 15 questions total if all 3 types selected. |
 | **Results — Analysis** | ATS scores, skills gap, quality bars, section feedback, upgrade tip |
 | **Results — Interview** | Per-question scores, feedback, ideal answers, overall score |
 | **Results — Combined** | Both analysis + interview results on one page (Mode 3) |
@@ -537,9 +567,13 @@ if "error" in result:
 ### UX rules to follow
 
 - **Max 3 roles selectable** — disable the UI after 3 are selected.
+- **All 3 interview types selectable** — candidate can pick any combination: 1, 2, or all 3.
 - **PDF only** — reject non-PDF files on the frontend before uploading.
-- **No mid-interview feedback** — show all 5 questions at once, collect all answers, submit together. Show feedback only after all answers are submitted.
-- **Interview answers are text only** — provide `<textarea>` inputs, no audio/video.
+- **Sequential questions (one at a time)** — show ONE question on screen. Candidate types their answer and submits it. Only then does the next question appear. Never show multiple questions at once.
+- **Progress indicator** — show "Question X of Y" (e.g., "Question 3 of 15") and optionally the current section label (e.g., "Behavioural").
+- **No mid-interview feedback** — do NOT show scores or feedback after each answer. Collect ALL answers across ALL types, send to backend as one batch, then show the full feedback report.
+- **Accumulate answers in a dict** — as the candidate answers each question, store it in a dict grouped by interview type: `{"behavioural": [{q, a}, ...], "technical": [...], ...}`. Send this dict to the backend after the last question.
+- **Interview answers are text only** — provide a `<textarea>` input, no audio/video.
 - **Loading states** — LLM calls take 2-5 seconds each. Show a spinner/skeleton.
 - **Error messages** — if the backend returns an error, display it to the user. For scanned PDFs, suggest these tools: [smallpdf.com](https://www.smallpdf.com), [ilovepdf.com](https://www.ilovepdf.com), [online2pdf.com](https://online2pdf.com)
 
@@ -844,17 +878,28 @@ parse_resume(pdf_path)                  ─── 1 LLM call
 validate_parsed_resume(parsed_resume)  ─── 0 calls (gate check)
   │
   ▼
-validate_interview_types(types)        ─── 0 calls
+validate_interview_types(types)        ─── 0 calls (can be all 3)
   │
   ▼
-┌─ FOR EACH interview type ─────────────────────────┐
+┌─ FOR EACH interview type (up to 3) ───────────────┐
 │  generate_interview_questions(                     │
 │      parsed_resume, role_id, type)                 │
 │      → 5 questions  │  1 LLM call per type        │
 └────────────────────────────────────────────────────┘
+  │  All questions generated upfront (up to 15 total)
+  ▼
+Backend sends flat ordered question list to frontend
   │
   ▼
-Candidate answers ALL questions (text only, no interruptions)
+┌─ SEQUENTIAL QUESTION DISPLAY ─────────────────────┐
+│  Frontend shows Q1 → candidate answers → Q2 → ... │
+│  One question at a time, no skipping ahead.        │
+│  Answers accumulate in dict grouped by type:       │
+│  {"behavioural": [{q,a},...], "technical": [...]}  │
+└────────────────────────────────────────────────────┘
+  │  After ALL questions answered
+  ▼
+Frontend sends complete answers dict to backend
   │
   ▼
 ┌─ FOR EACH interview type ─────────────────────────┐
@@ -864,7 +909,7 @@ Candidate answers ALL questions (text only, no interruptions)
 └────────────────────────────────────────────────────┘
   │
   ▼
-Full feedback report shown at end
+Full feedback report shown at end (all types combined)
 ```
 
 ### Mode 3 — Both at Once
@@ -876,7 +921,7 @@ PDF File
 parse_resume(pdf_path)                  ─── 1 LLM call
   │
   ▼
-validate_role_selection + validate_interview_types
+validate_role_selection + validate_interview_types (can be all 3)
   │
   ├──► Resume Analysis runs first:
   │      analyze_resume(parsed_resume, role_id)       ─── 1 LLM call
@@ -885,7 +930,11 @@ validate_role_selection + validate_interview_types
   │    Analysis complete → Interview starts automatically:
   │
   ├──► generate_interview_questions (per type)        ─── 1 LLM call each
-  │      → Candidate answers all questions
+  │      → Questions shown ONE AT A TIME
+  │      → Candidate answers each before next appears
+  │      → Answers stored in dict grouped by type
+  │
+  │    After ALL questions answered:
   │
   └──► evaluate_interview_answers (per type)          ─── 1 LLM call each
          │
@@ -1084,4 +1133,4 @@ The FastAPI `main.py` will be added at deployment time — it is not part of the
 ---
 
 **GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview
-**Last Updated:** Session 5 complete — Mock Interview module + comprehensive teammate documentation.
+**Last Updated:** Session 6 — Sequential one-at-a-time question flow + all-3-types selection for mock interviews.
