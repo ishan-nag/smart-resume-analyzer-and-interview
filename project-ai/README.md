@@ -1,64 +1,52 @@
-# Smart Mock Interview and Resume Analyzer Tool — AI Module
+# Smart Resume Analyzer & Mock Interview Tool — AI Module
 
-The AI module handles four things: parsing resumes, generating interview questions, scoring resumes against job descriptions, and evaluating candidate answers. It's written in Python and uses the Groq API for LLM calls.
+The AI module is the intelligence layer of this project. It handles **resume parsing**, **ATS scoring**, **resume analysis**, **mock interview question generation**, and **answer evaluation**. It is written in Python and uses the **Groq API** (free tier, `llama-3.3-70b-versatile` model) for all LLM calls.
 
----
-
-## Team
-
-- **AI/ML** — This module (Python)
-- **Backend** — Java Spring Boot, calls functions from this module
-- **Frontend** — Talks to the backend, never touches this module directly
+> **This README is the single source of truth.** Every teammate (Backend, Frontend, AI) should read their dedicated section below. If your question is not answered here, open a GitHub Issue.
 
 ---
 
-## Setup
+## Table of Contents
 
-You need Python 3.10+ and pip installed.
+1. [Team & Responsibilities](#team--responsibilities)
+2. [Project Repository Structure](#project-repository-structure)
+3. [Git Workflow (All Teammates)](#git-workflow-all-teammates)
+4. [What the Product Does — The 3 Modes](#what-the-product-does--the-3-modes)
+5. [Session Rules & Constraints](#session-rules--constraints)
+6. [AI Module Setup (AI Teammates Only)](#ai-module-setup-ai-teammates-only)
+7. [Running the AI Modules Locally](#running-the-ai-modules-locally)
+8. [FOR THE BACKEND DEVELOPER — Complete Integration Guide](#for-the-backend-developer--complete-integration-guide)
+9. [FOR THE FRONTEND DEVELOPER — Complete UI Guide](#for-the-frontend-developer--complete-ui-guide)
+10. [FOR THE AI TEAMMATES — Module Reference](#for-the-ai-teammates--module-reference)
+11. [API Function Reference (All 7 Functions)](#api-function-reference-all-7-functions)
+12. [API Call Budget & Rate Limits](#api-call-budget--rate-limits)
+13. [End-to-End Flow — AI Module Only](#end-to-end-flow--ai-module-only)
+14. [End-to-End Flow — Full Project](#end-to-end-flow--full-project-frontend--backend--ai)
+15. [Project Folder Structure](#project-folder-structure)
+16. [Stateless Architecture & Data Privacy](#stateless-architecture--data-privacy)
+17. [Handling Scanned / Image-Based PDFs](#handling-scanned--image-based-pdfs)
+18. [Common Errors & Fixes](#common-errors--fixes)
+19. [Deployment Notes](#deployment-notes)
 
-```bash
-# 1. Go into the project folder
-cd project-ai
+---
 
-# 2. Create and activate a virtual environment
-python -m venv .venv
+## Team & Responsibilities
 
-# Windows
-.\.venv\Scripts\Activate.ps1
-# Mac/Linux
-source .venv/bin/activate
+| Role | Count | Technology | Folder | What they build |
+|---|---|---|---|---|
+| **AI/ML** | 2 people | Python 3.10+ | `project-ai/` | Resume parser, ATS scorer, resume analyzer, mock interview engine |
+| **Backend (Team Lead)** | 1 person | Java Spring Boot | `project-backend/` | REST API, PDF upload, session orchestration, calls AI functions |
+| **Frontend** | 1 person | TBD | `project-frontend/` | User interface, file upload, role selection, results display |
 
-# 3. Install dependencies
-pip install -r requirements.txt
+**Key rule:** Each teammate works ONLY in their own folder. Do NOT edit files in another teammate's directory.
 
-# 4. Set up your API key
-copy .env.example .env       # Windows
-cp .env.example .env         # Mac/Linux
+**Communication flow:**
 ```
-
-Open `.env` and add your Groq API key:
+Frontend  ──HTTP──►  Backend  ──Python calls──►  AI Module  ──HTTPS──►  Groq API
 ```
-GROQ_API_KEY=your_key_here
-```
-
-Get a free key at https://console.groq.com
-
-> Never push `.env` to GitHub. It's already in `.gitignore`.
-
----
-# Smart Resume Analyzer — AI Module
-
-The AI module handles resume parsing and resume vs. job role analysis. It is written in Python and uses the Groq API (free tier) for LLM calls. The backend calls functions from this module — the frontend never touches it directly.
-
----
-
-## Team
-
-| Role | Technology |
-|---|---|
-| AI/ML | Python — this module |
-| Backend | Java Spring Boot |
-| Frontend | Separate teammate |
+- Frontend **never** calls the AI module directly.
+- Backend is the **orchestrator** — it decides which AI functions to call and in what order.
+- AI module is a **stateless library** — it takes inputs, returns outputs, stores nothing.
 
 ---
 
@@ -66,18 +54,18 @@ The AI module handles resume parsing and resume vs. job role analysis. It is wri
 
 ```
 smart-resume-analyzer-and-interview/
-├── project-ai/         ← Python AI module (AI/ML teammate)
-├── project-backend/    ← Java Spring Boot (backend teammate)
-└── project-frontend/   ← Frontend (frontend teammate)
+├── project-ai/         ← Python AI module (AI teammates)
+├── project-backend/    ← Java Spring Boot (backend / team lead)
+└── project-frontend/   ← UI (frontend teammate)
 ```
+
+**GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview
 
 ---
 
-## For Teammates — Getting Started with the Repo
+## Git Workflow (All Teammates)
 
-### Step 1 — Clone the repository to your Desktop
-
-Open a terminal (Command Prompt, PowerShell, or Git Bash) and run:
+### Step 1 — Clone the repo
 
 ```bash
 cd Desktop
@@ -85,112 +73,112 @@ git clone https://github.com/ishan-nag/smart-resume-analyzer-and-interview.git
 cd smart-resume-analyzer-and-interview
 ```
 
-Your folder structure on Desktop will look like:
-
-```
-Desktop/
-└── smart-resume-analyzer-and-interview/
-    ├── project-ai/
-    ├── project-backend/
-    └── project-frontend/
-```
-
----
-
-### Step 2 — Work inside your own folder only
-
-Each teammate works only in their own subfolder:
-
-| Teammate | Your folder |
-|---|---|
-| AI/ML | `project-ai/` |
-| Backend | `project-backend/` |
-| Frontend | `project-frontend/` |
-
-Do NOT make changes in another teammate's folder.
-
----
-
-### Step 3 — Create your own branch before making changes
-
-Never push directly to `main`. Always work on your own branch.
+### Step 2 — Create your own branch (NEVER push to main)
 
 ```bash
-# Create and switch to your branch
-git checkout -b your-name/feature-name
-
-# Examples:
+# Format: your-role/feature-name
 git checkout -b backend/resume-upload-api
 git checkout -b frontend/role-selection-page
-git checkout -b ai/resume-analyzer-module
+git checkout -b ai/mock-interview-module
 ```
 
----
-
-### Step 4 — Make your changes, then commit
-
-After making changes inside your folder:
+### Step 3 — Make changes, commit, push
 
 ```bash
-# Check what files you changed
-git status
-
-# Stage your changes
-git add .
-
-# Commit with a clear message
-git commit -m "Add resume upload endpoint to backend"
+git status                                    # See what changed
+git add .                                     # Stage changes
+git commit -m "Add resume upload endpoint"    # Commit with clear message
+git push origin your-branch-name              # Push to GitHub
 ```
 
----
+### Step 4 — Open a Pull Request
 
-### Step 5 — Push your branch to GitHub
+1. Go to https://github.com/ishan-nag/smart-resume-analyzer-and-interview
+2. Click **"Compare & pull request"**
+3. Base branch = `main`, compare = your branch
+4. Write a title + description → Click **"Create pull request"**
+5. **Wait for the team lead to review and merge.** Do NOT merge your own PR.
 
-```bash
-git push origin your-branch-name
-
-# Example:
-git push origin backend/resume-upload-api
-```
-
----
-
-### Step 6 — Open a Pull Request (PR) to main
-
-1. Go to the repository on GitHub: https://github.com/ishan-nag/smart-resume-analyzer-and-interview
-2. You will see a prompt: **"Compare & pull request"** — click it
-3. Set the base branch to `main` and the compare branch to your branch
-4. Write a short title and description of what you changed
-5. Click **"Create pull request"**
-6. The repo host (Ishan) will review and merge it
-
-> Do NOT merge your own PR. Wait for the host to review and approve it.
-
----
-
-### Step 7 — Keep your local repo up to date
-
-Before starting work each day, pull the latest changes from main:
+### Step 5 — Stay up to date (do this daily)
 
 ```bash
 git checkout main
 git pull origin main
-
-# Switch back to your branch and bring in the latest main changes
 git checkout your-branch-name
 git merge main
 ```
 
-If there are merge conflicts, resolve them in your editor, then:
-
+If merge conflicts appear:
 ```bash
+# Fix conflicts in your editor, then:
 git add .
 git commit -m "Resolve merge conflicts"
 ```
 
 ---
 
-## AI Module Setup (for AI/ML teammate only)
+## What the Product Does — The 3 Modes
+
+The product offers three distinct flows. The user picks one when they start.
+
+### Mode 1 — Resume Analysis Only
+
+> "I want to know how my resume scores against specific job roles."
+
+```
+User uploads PDF → Selects up to 3 roles → Gets ATS scores, skills gap analysis,
+quality scores, section-by-section feedback, and a global upgrade tip.
+```
+
+**No interview. Just resume feedback.**
+
+### Mode 2 — Mock Interview Only
+
+> "I want to practice interview questions for a specific role."
+
+```
+User uploads PDF (required — we need their background) → Selects 1 role →
+Selects interview types (behavioural / technical / domain-specific) →
+Gets 5 questions per type → Answers all questions via text →
+Gets full feedback report with scores, feedback per question, and ideal answers.
+```
+
+**No resume analysis. Just interview practice.**
+
+**Important:** The candidate answers ALL questions first, THEN sees ALL feedback at the end. There are NO interruptions mid-interview.
+
+### Mode 3 — Both at Once
+
+> "I want the full experience — analyze my resume AND interview me."
+
+```
+User uploads PDF → Selects 1 role + interview types →
+Resume analysis runs first → Interview starts automatically after →
+User answers all questions → Gets a combined final report with both
+resume analysis results AND interview feedback.
+```
+
+---
+
+## Session Rules & Constraints
+
+These rules are **non-negotiable** and enforced in code via `shared/validators.py`:
+
+| Rule | Detail | Who enforces it |
+|---|---|---|
+| Max roles per session | **3** | `validate_role_selection()` returns error if > 3 |
+| Valid interview types | `"behavioural"`, `"technical"`, `"domain-specific"` only | `validate_interview_types()` rejects anything else |
+| Resume required first | Resume must be parsed before interview can start | `validate_parsed_resume()` checks for valid data |
+| No duplicate roles | Same role cannot be selected twice | `validate_role_selection()` checks for duplicates |
+| Stateless | No data stored between sessions | Every function call is self-contained |
+| Text-based PDFs only | Scanned/image PDFs are rejected | `parse_resume()` returns error |
+| Text-only answers | Interview answers are text input — no audio/video | Frontend enforces this |
+
+---
+
+## AI Module Setup (AI Teammates Only)
+
+> **Backend and Frontend teammates:** You do NOT need to set this up. Skip to your dedicated section below.
 
 ### Requirements
 
@@ -200,163 +188,415 @@ git commit -m "Resolve merge conflicts"
 ### Installation
 
 ```powershell
-# Go into the AI module folder
+# 1. Go into the AI module folder
 cd Desktop\smart-resume-analyzer-and-interview\project-ai
 
-# Create a virtual environment
+# 2. Create a virtual environment
 python -m venv .venv
 
-# Activate it (Windows PowerShell)
+# 3. Activate it
+# Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
-
-# Activate it (Mac/Linux)
+# Mac/Linux:
 source .venv/bin/activate
 
-# Install dependencies
+# 4. Install dependencies
 pip install -r requirements.txt
 
-# Set up your API key
-copy .env.example .env
+# 5. Set up your API key
+copy .env.example .env          # Windows
+cp .env.example .env            # Mac/Linux
 ```
 
-Open `.env` and add your Groq API key:
-
+Open `.env` and replace with your real key:
 ```
 GROQ_API_KEY=your_key_here
 ```
 
 Get a free key at https://console.groq.com
 
-> Never push `.env` to GitHub. It is already in `.gitignore`.
+> ⚠️ **NEVER push `.env` to GitHub.** It is already in `.gitignore`.
 
 ---
 
-## Running the AI Modules
+## Running the AI Modules Locally
 
 Always run from the `project-ai/` folder, never from inside a subfolder.
 
 ```powershell
-# Run in this order:
-python -m resume_parser.resume_parser
-python -m job_roles.job_roles
-python -m ats_scorer.ats_scorer
-python -m resume_analyzer.resume_analyzer
-```
+# Activate venv first
+.\.venv\Scripts\Activate.ps1
 
-Run `resume_parser` first — it generates `output/parsed_resume.json` which other modules use.
+# Run modules in this order:
+python -m resume_parser.resume_parser       # Must run first — generates parsed JSON
+python -m job_roles.job_roles               # Test: shows all 28 roles
+python -m ats_scorer.ats_scorer             # Test: scores resume vs roles
+python -m resume_analyzer.resume_analyzer   # Test: full analysis pipeline
 
----
-
-## Handling Scanned / Image-Based PDFs
-
-The AI module only supports text-based PDFs. If a candidate uploads a scanned or image-based PDF, the parser returns:
-
-```json
-{"error": "Could not extract text. File may be scanned or image-based."}
-```
-
-**Backend:** Check for the `error` key → return HTTP 400 with the error message.
-
-**Frontend:** Show this message to the user:
-
-```
-"We couldn't read your resume. This usually means your PDF is image-based
-or scanned. Please convert it to a text-based PDF and try again."
-```
-
-Suggest these free tools:
-- https://www.smallpdf.com
-- https://www.ilovepdf.com
-- https://online2pdf.com
-
----
-
-## For the Backend Developer
-
-Every AI function returns a plain Python dict. Serialize it with `json.dumps()` and send it to the frontend.
-
-The backend integration flow is:
-
-```
-    1. parse_resume(pdf_path)                        → parsed_resume       [1 LLM call]
-    2. get_all_roles()                               → roles list          [0 LLM calls]
-    3. validate_role_selection(role_ids)              → check max 3 roles   [0 LLM calls]
-    4. for each role_id: analyze_resume(parsed_resume, role_id)
-                                                     → role_result         [1 LLM call each]
-    5. generate_upgrade_tip(all_role_results, parsed_resume)
-                                                     → upgrade_tip         [1 LLM call]
-    6. best_match = max(all_role_results,
-           key=lambda r: r["ats"]["overall_score"])  → best match role     [0 LLM calls]
-    7. Return full JSON to frontend
+# Test mock interview module:
+python test_mock_interview.py
 ```
 
 ---
 
-### Session Rules
+## FOR THE BACKEND DEVELOPER — Complete Integration Guide
 
-| Rule | Detail |
-|---|---|
-| Max roles per session | **3** (enforced by `validate_role_selection`) |
-| Interview types allowed | `"behavioural"`, `"technical"`, `"domain-specific"` |
-| Resume gate | Resume must be parsed before interview can start |
-| Stateless | No data is stored between sessions — every request is self-contained |
+> **This section is specifically for you.** Read this thoroughly and you should be able to integrate without asking the AI team anything.
 
----
+### How to call AI functions
 
-### Input Validators
+Every AI function:
+- Takes **plain Python dicts/strings** as input
+- Returns a **plain Python dict** as output
+- You serialize the output with `json.dumps()` and send it to the frontend
 
-The backend **must** call these validators before invoking AI functions. They are pure functions with zero API calls.
+### Step-by-step: What your API endpoints should do
 
-```python
-from shared.validators import validate_role_selection, validate_interview_types, validate_parsed_resume
-
-# Before analysis — enforce 3-role cap
-check = validate_role_selection(["ml_engineer", "backend_engineer"])
-# → {"valid": True}
-
-check = validate_role_selection(["a", "b", "c", "d"])
-# → {"valid": False, "error": "Too many roles selected (4). Maximum allowed is 3 per session."}
-
-# Before interview — validate types
-check = validate_interview_types(["behavioural", "technical"])
-# → {"valid": True}
-
-# Before interview — gate: resume must exist
-check = validate_parsed_resume(parsed_resume)
-# → {"valid": True} or {"valid": False, "error": "..."}
-```
-
----
-
-### THREE CANDIDATE FLOWS
-
-You must support three different modes using the functions provided below:
-
-**Mode 1 — Resume Analysis only**
-* Upload PDF → `parse_resume` → Select role(s) (**max 3**) → `validate_role_selection` → `analyze_resume` (for selected roles) → `generate_upgrade_tip` → show ATS score, feedback, and upgrade tip.
-
-**Mode 2 — Interview only**
-* Upload PDF (required gate) → `parse_resume` → `validate_parsed_resume` → Select role → `validate_interview_types` → `generate_interview_questions` for each type selected (5 questions per section) → frontend shows all text input fields to the candidate.
-* Once candidate submits all answers → `evaluate_interview_answers` for each section → Full feedback report shown at the end. (No mid-interview interruptions!)
-
-**Mode 3 — Both at once**
-* Upload PDF → `parse_resume` → `validate_role_selection` + `validate_interview_types` → Select role & interview types → `analyze_resume` runs.
-* Once analysis is complete, interview starts automatically via `generate_interview_questions` → User answers questions → `evaluate_interview_answers`.
-* Output is a combined final report.
-
----
-
-### 1. Resume Parser
-
-Parses a PDF resume and returns structured candidate data.
+#### Endpoint 1: Upload Resume (all modes need this)
 
 ```python
 from resume_parser import parse_resume
 
+# 1. Save uploaded PDF to a temp path
+pdf_path = "uploads/candidate_123.pdf"
+
+# 2. Parse it
+parsed_resume = parse_resume(pdf_path)
+
+# 3. Check for errors
+if "error" in parsed_resume:
+    return HTTP_400(parsed_resume["error"])
+    # Possible errors:
+    #   "File not found: uploads/candidate_123.pdf"
+    #   "Could not extract text. File may be scanned or image-based."
+
+# 4. Success — store parsed_resume in memory for this request
+# DO NOT persist it to a database — system is stateless
+```
+
+#### Endpoint 2: Get Available Roles (for dropdown)
+
+```python
+from job_roles import get_all_roles
+
+roles = get_all_roles()
+# Returns list of 28 role dicts — send directly to frontend
+# Zero API calls — reads from local JSON
+```
+
+#### Endpoint 3: Mode 1 — Resume Analysis
+
+```python
+from shared.validators import validate_role_selection
+from resume_analyzer import analyze_resume, generate_upgrade_tip
+
+# 1. Validate role selection (max 3, no duplicates)
+check = validate_role_selection(selected_role_ids)
+if not check["valid"]:
+    return HTTP_400(check["error"])
+
+# 2. Run analysis for each role
+all_results = []
+for role_id in selected_role_ids:
+    result = analyze_resume(parsed_resume, role_id)
+    if "error" not in result:
+        all_results.append(result)
+
+# 3. Generate upgrade tip (call ONCE, not per role)
+tip = generate_upgrade_tip(all_results, parsed_resume)
+
+# 4. Find best match
+best_match = max(all_results, key=lambda r: r["ats"]["overall_score"])
+
+# 5. Return to frontend
+return {
+    "mode": "analysis",
+    "results": all_results,
+    "best_match": best_match,
+    "upgrade_tip": tip["upgrade_tip"],
+    "candidate_name": parsed_resume.get("name", "Unknown"),
+    "primary_stack": ", ".join(parsed_resume.get("skills", [])[:3])
+}
+```
+
+#### Endpoint 4: Mode 2 — Interview Only
+
+```python
+from shared.validators import validate_parsed_resume, validate_interview_types
+from mock_interview import generate_interview_questions, evaluate_interview_answers
+
+# 1. Validate resume exists
+check = validate_parsed_resume(parsed_resume)
+if not check["valid"]:
+    return HTTP_400(check["error"])
+
+# 2. Validate interview types
+check = validate_interview_types(selected_interview_types)
+if not check["valid"]:
+    return HTTP_400(check["error"])
+
+# 3. Generate questions for each selected type
+all_questions = {}
+for interview_type in selected_interview_types:
+    result = generate_interview_questions(parsed_resume, role_id, interview_type)
+    if result["status"] == "success":
+        all_questions[interview_type] = result["questions"]
+    else:
+        return HTTP_500(result["error"])
+
+# 4. Send questions to frontend — frontend collects answers
+return {"questions": all_questions}
+
+# ──────────── LATER, when frontend sends back answers ────────────
+
+# 5. Evaluate answers for each type
+all_evaluations = {}
+for interview_type, qa_list in submitted_answers.items():
+    result = evaluate_interview_answers(role_id, interview_type, qa_list)
+    if result["status"] == "success":
+        all_evaluations[interview_type] = result["evaluation"]
+
+# 6. Return full feedback report
+return {"mode": "interview", "evaluations": all_evaluations}
+```
+
+#### Endpoint 5: Mode 3 — Both
+
+```python
+# Combine Endpoint 3 and Endpoint 4 above.
+# Run resume analysis first, then interview.
+# Return combined JSON:
+return {
+    "mode": "both",
+    "analysis": { "results": all_results, "best_match": best_match, "upgrade_tip": tip },
+    "interview": { "evaluations": all_evaluations }
+}
+```
+
+### Error handling checklist
+
+Every AI function can return an `"error"` key. **Always check for it:**
+
+```python
+result = some_ai_function(...)
+if "error" in result:
+    return HTTP_400_or_500(result["error"])
+```
+
+| Error message | HTTP code | When it happens |
+|---|---|---|
+| `"File not found: ..."` | 400 | PDF path is wrong |
+| `"Could not extract text..."` | 400 | Scanned/image PDF |
+| `"Role not found: ..."` | 400 | Invalid role_id |
+| `"Too many roles selected..."` | 400 | More than 3 roles |
+| `"Invalid interview type..."` | 400 | Typo in type string |
+| `"Resume must be uploaded..."` | 400 | Interview without resume |
+| `"Failed to generate questions..."` | 500 | LLM call failed after retries |
+| `"Failed to evaluate answers..."` | 500 | LLM call failed after retries |
+| `"GROQ_API_KEY not found"` | 500 | `.env` not configured |
+
+### What NOT to do
+
+- ❌ Do NOT call `ats_scorer` directly — `analyze_resume` already uses it internally.
+- ❌ Do NOT cache AI results across requests — system is stateless.
+- ❌ Do NOT store parsed resumes in a database — process fresh each time.
+- ❌ Do NOT allow more than 3 roles — always call `validate_role_selection` first.
+- ❌ Do NOT call `generate_upgrade_tip` per role — call it ONCE after all roles are done.
+- ❌ Do NOT show interview feedback mid-interview — collect ALL answers first, THEN evaluate.
+
+---
+
+## FOR THE FRONTEND DEVELOPER — Complete UI Guide
+
+> **This section is specifically for you.** You talk to the Backend only — never to the AI module directly.
+
+### Pages you need to build
+
+| Page | What it does |
+|---|---|
+| **Landing / Upload** | File upload (PDF only) + mode selector (Analysis / Interview / Both) |
+| **Role Selection** | Dropdown or card grid of roles — max 3 selectable for analysis, 1 for interview |
+| **Interview Type Selection** | Checkboxes: Behavioural, Technical, Domain-specific (Mode 2 & 3 only) |
+| **Interview Questions** | Display 5 questions per section with text input fields for answers |
+| **Results — Analysis** | ATS scores, skills gap, quality bars, section feedback, upgrade tip |
+| **Results — Interview** | Per-question scores, feedback, ideal answers, overall score |
+| **Results — Combined** | Both analysis + interview results on one page (Mode 3) |
+
+### What the backend sends you (data shapes)
+
+#### Role list (for dropdown)
+
+```json
+[
+    {"id": "ml_engineer", "title": "Machine Learning Engineer", "category": "Data & AI", "experience_level": "Mid-level"},
+    {"id": "backend_engineer", "title": "Backend Engineer", "category": "Software Engineering", "experience_level": "Mid-level"}
+]
+```
+
+28 roles across 7 categories: Software Engineering, Data & AI, Infrastructure & Cloud, Mobile, Security, Product & Management, Emerging & Specialist.
+
+#### Resume analysis result (per role)
+
+```json
+{
+    "role": {
+        "id": "ml_engineer",
+        "title": "Machine Learning Engineer",
+        "category": "Data & AI"
+    },
+    "ats": {
+        "overall_score": 78.0,
+        "recommendation": "Good Match",
+        "breakdown": {
+            "semantic_match":   {"score": 80, "feedback": "Strong backend experience but lacks cloud skills."},
+            "experience_match": {"score": 70, "feedback": "2 years relevant experience, role requires 3-5."},
+            "education_match":  {"score": 85, "feedback": "B.Tech Computer Science matches the requirement."}
+        }
+    },
+    "skills_gap": {
+        "matched": ["python", "pytorch", "docker"],
+        "missing": ["tensorflow", "mlflow"],
+        "nice_to_have_missing": ["kubernetes", "airflow"]
+    },
+    "quality_score": {
+        "overall": 72,
+        "breakdown": {"format": 75, "clarity": 70, "impact": 68, "brevity": 80}
+    },
+    "section_feedback": {
+        "experience": {"score": 75, "feedback": "Good range but lacks metrics.", "improvements": ["Add quantifiable achievements"]},
+        "education":  {"score": 90, "feedback": "Degree is well-aligned.", "improvements": []},
+        "summary":    {"score": 60, "feedback": "Too generic.", "improvements": ["Tailor to ML roles", "Mention top tools"]},
+        "skills":     {"score": 80, "feedback": "Strong core skills listed.", "improvements": ["Add MLflow"]}
+    }
+}
+```
+
+#### Interview questions (per type)
+
+```json
+{
+    "status": "success",
+    "questions": [
+        "How do you handle database schema changes in a Django project?",
+        "Can you describe a debugging strategy you used for a complex API issue?",
+        "What is the difference between horizontal and vertical scaling?",
+        "How would you implement rate limiting in a REST API?",
+        "What design patterns do you follow when structuring a new backend app?"
+    ]
+}
+```
+
+#### Interview evaluation (per type)
+
+```json
+{
+    "status": "success",
+    "evaluation": {
+        "overall_score": 85,
+        "overall_summary": "Good effort overall, strong on basics but could go deeper on system design.",
+        "evaluations": [
+            {
+                "question_number": 1,
+                "question": "How do you handle database schema changes?",
+                "score_out_of_10": 8,
+                "feedback": "You mentioned migrations correctly but didn't discuss rollback strategies.",
+                "ideal_answer": "A great answer would cover migration tools, version control of schemas, rollback plans, and zero-downtime migration strategies."
+            }
+        ]
+    }
+}
+```
+
+### UI ↔ Data Mapping Table
+
+| UI Element | JSON Source |
+|---|---|
+| Candidate Name | `parsed_resume.name` |
+| Primary Stack tags | `parsed_resume.skills[:3]` (first 3 skills) |
+| Best Match role title | `role.title` of the result with highest `ats.overall_score` |
+| Resume Score (big number) | `ats.overall_score` of best match |
+| Roles Compared count | `len(selected_role_ids)` |
+| Role card score % | `ats.overall_score` per role |
+| ATS breakdown bars | `ats.breakdown.semantic_match.score`, `.experience_match.score`, `.education_match.score` |
+| ATS breakdown text | `ats.breakdown.*.feedback` |
+| Recommendation tag | `ats.recommendation` — values: "Strong Match", "Good Match", "Average Match", "Poor Match" |
+| Matched skills (green tags) | `skills_gap.matched` |
+| Missing skills (red tags) | `skills_gap.missing` |
+| Nice-to-have missing | `skills_gap.nice_to_have_missing` |
+| Quality score bars | `quality_score.breakdown.format`, `.clarity`, `.impact`, `.brevity` |
+| Section feedback | `section_feedback.experience.feedback`, etc. |
+| Improvements bullets | `section_feedback.*.improvements` (array of strings) |
+| Upgrade tip paragraph | `upgrade_tip` (single string) |
+| Interview question text | `questions[i]` (string) |
+| Interview score per Q | `evaluation.evaluations[i].score_out_of_10` |
+| Interview feedback per Q | `evaluation.evaluations[i].feedback` |
+| Ideal answer per Q | `evaluation.evaluations[i].ideal_answer` |
+| Interview overall score | `evaluation.overall_score` (out of 100) |
+| Interview overall summary | `evaluation.overall_summary` |
+
+### UX rules to follow
+
+- **Max 3 roles selectable** — disable the UI after 3 are selected.
+- **PDF only** — reject non-PDF files on the frontend before uploading.
+- **No mid-interview feedback** — show all 5 questions at once, collect all answers, submit together. Show feedback only after all answers are submitted.
+- **Interview answers are text only** — provide `<textarea>` inputs, no audio/video.
+- **Loading states** — LLM calls take 2-5 seconds each. Show a spinner/skeleton.
+- **Error messages** — if the backend returns an error, display it to the user. For scanned PDFs, suggest these tools: [smallpdf.com](https://www.smallpdf.com), [ilovepdf.com](https://www.ilovepdf.com), [online2pdf.com](https://online2pdf.com)
+
+---
+
+## FOR THE AI TEAMMATES — Module Reference
+
+> **This section is for the 2 AI/ML developers.** You own the `project-ai/` folder.
+
+### Architecture overview
+
+```
+project-ai/
+├── resume_parser/     → PDF text extraction + LLM structuring
+├── job_roles/         → 28 roles from local JSON (0 API calls)
+├── ats_scorer/        → ATS scoring (used internally by analyzer)
+├── resume_analyzer/   → Full analysis + upgrade tip (primary module)
+├── mock_interview/    → Question generation + answer evaluation
+├── shared/            → Groq client, retry handler, validators
+├── data/              → Sample PDFs + job_roles.json + skills_list.json
+└── output/            → Auto-generated JSON outputs (gitignored)
+```
+
+### Key design decisions
+
+1. **Single LLM call per analysis** — `analyze_resume` batches ATS + quality + feedback into 1 call (not 3 separate calls).
+2. **Skills gap uses regex** — no API call needed for matching skills.
+3. **Retry with exponential backoff** — all LLM calls go through `shared/retry_handler.py` (3 retries, 1s → 2s → 4s delay).
+4. **Singleton Groq client** — `shared/groq_client.py` creates the client once and reuses it.
+5. **Model configs** — temperature and max_tokens per module are centralized in `MODEL_CONFIGS` dict in `groq_client.py`.
+6. **Questions are concise** — LLM is prompted to generate questions answerable in 3-4 lines of text.
+
+### How to add a new module
+
+1. Create a folder: `project-ai/new_module/`
+2. Add `__init__.py`, your main `.py` file, and `prompt_templates.py`
+3. Import the shared client: `from shared.groq_client import get_groq_client, MODEL_CONFIGS`
+4. Use `call_with_retry()` for all LLM calls
+5. Return plain Python dicts — the backend serializes them
+6. Add a config entry in `MODEL_CONFIGS` in `groq_client.py`
+7. Update this README
+
+---
+
+## API Function Reference (All 7 Functions)
+
+### 1. `parse_resume(pdf_path)` — Resume Parser
+
+Extracts structured data from a PDF resume using LLM.
+
+```python
+from resume_parser import parse_resume
 result = parse_resume("uploads/resume.pdf")
 ```
 
-Returns:
+**Input:** PDF file path (string)
+**Output:**
 ```json
 {
     "name":       "John Doe",
@@ -371,184 +611,99 @@ Returns:
     "raw_text":   "full resume text..."
 }
 ```
-
-On failure: `{"error": "File not found: uploads/resume.pdf"}`
-
-**API calls: 1**
+**On error:** `{"error": "File not found: uploads/resume.pdf"}` or `{"error": "Could not extract text..."}`
+**API calls:** 1
 
 ---
 
-### 2. Job Roles
+### 2. `get_all_roles()` — Job Roles
 
-Returns the list of 28 supported job roles. Zero API calls — reads from a local JSON file.
+Returns lightweight list of 28 roles for frontend dropdown. Zero API calls.
 
 ```python
-from job_roles import get_all_roles, get_role_by_id, build_job_description
-
-# Get lightweight list for frontend dropdown
+from job_roles import get_all_roles
 roles = get_all_roles()
 ```
 
-Returns:
-```json
-[
-    {"id": "ml_engineer",  "title": "Machine Learning Engineer", "category": "Data & AI",          "experience_level": "Mid-level"},
-    {"id": "backend_engineer", "title": "Backend Engineer",      "category": "Software Engineering", "experience_level": "Mid-level"}
-]
-```
-
-28 roles across 7 categories: Software Engineering, Data & AI, Infrastructure & Cloud, Mobile, Security, Product & Management, Emerging & Specialist.
-
-**API calls: 0**
+**Output:** List of `{"id", "title", "category", "experience_level"}` dicts
+**API calls:** 0
 
 ---
 
-### 3. Resume Analyzer — PRIMARY MODULE
+### 3. `analyze_resume(parsed_resume, role_id)` — Resume Analyzer
 
-Analyzes a resume against a specific job role. Call once per role. The backend loops over selected roles.
+Full analysis of a resume against one role. Call once per role.
 
 ```python
-from resume_analyzer import analyze_resume, generate_upgrade_tip
-
-# Call once per role
+from resume_analyzer import analyze_resume
 result = analyze_resume(parsed_resume, role_id="ml_engineer")
 ```
 
-Returns:
-```json
-{
-    "role": {
-        "id":       "ml_engineer",
-        "title":    "Machine Learning Engineer",
-        "category": "Data & AI"
-    },
-    "ats": {
-        "overall_score":  78.0,
-        "recommendation": "Good Match",
-        "breakdown": {
-            "semantic_match":   {"score": 80, "feedback": "Strong backend experience but lacks cloud skills."},
-            "experience_match": {"score": 70, "feedback": "2 years relevant experience, role requires 3-5."},
-            "education_match":  {"score": 85, "feedback": "B.Tech Computer Science matches the requirement."}
-        }
-    },
-    "skills_gap": {
-        "matched":              ["python", "pytorch", "docker"],
-        "missing":              ["tensorflow", "mlflow"],
-        "nice_to_have_missing": ["kubernetes", "airflow"]
-    },
-    "quality_score": {
-        "overall": 72,
-        "breakdown": {"format": 75, "clarity": 70, "impact": 68, "brevity": 80}
-    },
-    "section_feedback": {
-        "experience": {"score": 75, "feedback": "Good range of projects but lacks metrics.", "improvements": ["Add quantifiable achievements"]},
-        "education":  {"score": 90, "feedback": "Degree is well-aligned.", "improvements": []},
-        "summary":    {"score": 60, "feedback": "Too generic.", "improvements": ["Tailor to ML roles", "Mention top tools"]},
-        "skills":     {"score": 80, "feedback": "Strong core skills listed.", "improvements": ["Add MLflow"]}
-    }
-}
-```
-
-On failure: `{"error": "Reason for failure"}`
-
-**API calls: 1 per role**
+**Output:** Dict with `role`, `ats`, `skills_gap`, `quality_score`, `section_feedback`
+**On error:** `{"error": "..."}`
+**API calls:** 1 per role
 
 ---
 
-### 4. Upgrade Tip Generator
+### 4. `generate_upgrade_tip(all_role_results, parsed_resume)` — Upgrade Tip
 
-Call ONCE after all `analyze_resume()` calls are done. Takes all role results and returns a single upgrade tip paragraph.
+Call ONCE after all `analyze_resume()` calls. Returns one actionable paragraph.
 
 ```python
-# After looping over all roles:
-tip = generate_upgrade_tip(all_role_results, parsed_resume)
+from resume_analyzer import generate_upgrade_tip
+tip = generate_upgrade_tip(all_results, parsed_resume)
 ```
 
-Returns:
-```json
-{
-    "upgrade_tip": "Your resume shows strong Python fundamentals across all roles
-                    but consistently lacks cloud and deployment skills like Docker
-                    and Kubernetes. Adding these with concrete project examples
-                    would significantly improve your ATS scores."
-}
-```
-
-**API calls: 1 total (called once, not per role)**
+**Output:** `{"upgrade_tip": "Your resume shows strong Python fundamentals..."}`
+**API calls:** 1 total
 
 ---
 
-### 5. ATS Scorer (standalone)
+### 5. `score_resume(parsed_resume, role_id)` — ATS Scorer (standalone)
 
-Scores a resume against a role. Already used internally by `analyze_resume()` — backend does not need to call this separately unless needed standalone.
+Used internally by `analyze_resume()`. Backend does NOT need to call this separately.
 
 ```python
 from ats_scorer import score_resume
-
-# New way — pass role_id
 result = score_resume(parsed_resume, role_id="ml_engineer")
-
-# Old way — pass raw job description string (still works)
-result = score_resume(parsed_resume, job_description="We are looking for...")
 ```
 
-**API calls: 1**
+**API calls:** 1
 
 ---
 
-### 6. Mock Interview (Question Generator)
+### 6. `generate_interview_questions(parsed_resume, role_id, interview_type)` — Question Generator
 
-Generates 5 personalized questions based on the candidate's resume and selected role. Do this once per selected section type.
+Generates 5 focused questions. Call once per interview type.
 
 ```python
 from mock_interview import generate_interview_questions
-
-result = generate_interview_questions(
-    parsed_resume=parsed_resume,
-    role_id="ml_engineer",
-    interview_type="behavioural" # or "technical", "domain-specific"
-)
+result = generate_interview_questions(parsed_resume, "ml_engineer", "behavioural")
 ```
 
-Returns:
-```json
-{
-    "status": "success",
-    "questions": [
-        "Tell me about a time you had to resolve a conflict...",
-        "Question 2...",
-        "Question 3...",
-        "Question 4...",
-        "Question 5..."
-    ]
-}
-```
-
-**API calls: 1 per interview section**
+**Output:** `{"status": "success", "questions": ["Q1?", "Q2?", "Q3?", "Q4?", "Q5?"]}`
+**On error:** `{"status": "error", "error": "..."}`
+**API calls:** 1 per interview type
 
 ---
 
-### 7. Mock Interview (Answer Evaluator)
+### 7. `evaluate_interview_answers(role_id, interview_type, questions_and_answers)` — Answer Evaluator
 
-Evaluates the 5 candidate answers for a specific interview section and provides detailed feedback and scoring. Do this after they submit all answers for a section.
+Evaluates 5 answers. Call once per interview type AFTER all answers are collected.
 
 ```python
 from mock_interview import evaluate_interview_answers
-
-# Build the payload based on the candidate's inputs
 qa_list = [
-    {"question": "Tell me about a time...", "answer": "I once had a coworker..."},
-    # ... exactly 5 objects
+    {"question": "Q1?", "answer": "My answer..."},
+    {"question": "Q2?", "answer": "My answer..."},
+    {"question": "Q3?", "answer": "My answer..."},
+    {"question": "Q4?", "answer": "My answer..."},
+    {"question": "Q5?", "answer": "My answer..."}
 ]
-
-result = evaluate_interview_answers(
-    role_id="ml_engineer",
-    interview_type="behavioural",
-    questions_and_answers=qa_list
-)
+result = evaluate_interview_answers("ml_engineer", "behavioural", qa_list)
 ```
 
-Returns:
+**Output:**
 ```json
 {
     "status": "success",
@@ -558,7 +713,7 @@ Returns:
         "evaluations": [
             {
                 "question_number": 1,
-                "question": "Tell me about a time...",
+                "question": "Q1?",
                 "score_out_of_10": 8,
                 "feedback": "You answered this clearly...",
                 "ideal_answer": "A perfect answer would have..."
@@ -567,22 +722,45 @@ Returns:
     }
 }
 ```
-
-**API calls: 1 per interview section**
+**On error:** `{"status": "error", "error": "..."}`
+**API calls:** 1 per interview type
 
 ---
 
-## API Call Budget
+### Input Validators (0 API calls)
+
+```python
+from shared.validators import validate_role_selection, validate_interview_types, validate_parsed_resume
+
+# Enforce 3-role cap
+validate_role_selection(["ml_engineer", "backend_engineer"])
+# → {"valid": True}
+
+validate_role_selection(["a", "b", "c", "d"])
+# → {"valid": False, "error": "Too many roles selected (4). Maximum allowed is 3 per session."}
+
+# Validate interview types
+validate_interview_types(["behavioural", "technical"])
+# → {"valid": True}
+
+# Gate: resume must exist before interview
+validate_parsed_resume(parsed_resume)
+# → {"valid": True} or {"valid": False, "error": "..."}
+```
+
+---
+
+## API Call Budget & Rate Limits
 
 | Step | Module | Calls | Frequency |
 |---|---|---|---|
 | Parse resume | resume_parser | 1 | Once per session |
 | Get all roles | job_roles | 0 | Once per session |
-| Validate role selection | shared/validators | 0 | Once per session |
-| Analyze per role | resume_analyzer | 1 per role | Per role selected (max 3) |
+| Validate inputs | shared/validators | 0 | Once per session |
+| Analyze per role | resume_analyzer | 1 per role | Max 3 roles |
 | Global upgrade tip | resume_analyzer | 1 | Once after all roles |
-| Generate Questions | mock_interview | 1 per section | Per interview type selected |
-| Evaluate Answers | mock_interview | 1 per section | Per interview type selected |
+| Generate Questions | mock_interview | 1 per type | Max 3 types |
+| Evaluate Answers | mock_interview | 1 per type | Max 3 types |
 
 **Groq Free Tier limits (llama-3.3-70b-versatile):**
 
@@ -594,52 +772,193 @@ Returns:
 
 ### Why the 3-Role Cap Matters
 
-Without a role cap, a single user could select all 28 roles and consume 30+ API calls in one session — burning through the free tier budget for everyone.
+Without a cap, one user picking all 28 roles would burn 30+ API calls in a single session.
 
-**Before (no role cap) — worst case: user picks all 28 roles:**
+**Before (no cap) — worst case:**
 
-| Mode | API Calls per Session | Sessions/Day (free tier) |
+| Mode | Calls/Session | Users/Day |
 |---|---|---|
-| Mode 1 — Analysis only (28 roles) | 30 | ~33 |
-| Mode 3 — Both (28 roles + 3 interview types) | 36 | ~27 |
+| Mode 1 (28 roles) | 30 | ~33 |
+| Mode 3 (28 roles + 3 types) | 36 | ~27 |
 
 **After (3-role cap) — maximum possible:**
 
-| Mode | API Calls per Session | Sessions/Day (free tier) |
+| Mode | Calls/Session | Users/Day |
 |---|---|---|
-| Mode 1 — Analysis only (3 roles) | 5 | ~200 |
-| Mode 2 — Interview only (3 types) | 7 | ~142 |
-| Mode 3 — Both (3 roles + 3 interview types) | 11 | ~90 |
+| Mode 1 (3 roles) | 5 | ~200 |
+| Mode 2 (3 types) | 7 | ~142 |
+| Mode 3 (3 roles + 3 types) | 11 | ~90 |
 
-**Impact summary:**
+**Impact:**
 
-| Metric | Before (no cap) | After (3-role cap) | Improvement |
+| Metric | Before | After | Improvement |
 |---|---|---|---|
-| Max calls per session (Mode 3) | 36 | **11** | **70% fewer calls** |
-| Max calls per session (Mode 1) | 30 | **5** | **83% fewer calls** |
-| Users/day (Mode 3) | ~27 | **~90** | **3.3× more users** |
-| Users/day (Mode 1) | ~33 | **~200** | **6× more users** |
+| Max calls/session (Mode 3) | 36 | **11** | **70% fewer** |
+| Max calls/session (Mode 1) | 30 | **5** | **83% fewer** |
+| Users/day (Mode 3) | ~27 | **~90** | **3.3× more** |
+| Users/day (Mode 1) | ~33 | **~200** | **6× more** |
 
-> In practice, most candidates pick 1–2 roles, so you can realistically serve **150+ sessions/day** on the free tier.
+> In practice, most candidates pick 1–2 roles → **150+ sessions/day** on free tier.
 
 ---
 
-## Frontend → AI Output Mapping
+## End-to-End Flow — AI Module Only
 
-| UI Element | Source |
-|---|---|
-| Best Match role title | `role.title` of max `ats.overall_score` across all roles |
-| Resume Score number | `ats.overall_score` of best match role |
-| Roles Compared count | `len(selected_role_ids)` — backend counts |
-| Role card score % | `ats.overall_score` per role |
-| Role card skill tags | `role.required_skills[:3]` from job_roles |
-| ATS breakdown bars | `ats.breakdown` per role |
-| Recommendation paragraph | `ats.recommendation` per role |
-| Strengths bullets | `section_feedback[section].feedback` (positive sections) |
-| Needs Improvement bullets | `section_feedback[section].improvements` |
-| Suggested Resume Upgrade | `upgrade_tip.upgrade_tip` |
-| Candidate Name | `parsed_resume.name` |
-| Primary Stack | `", ".join(parsed_resume["skills"][:3])` — backend derives this |
+### Mode 1 — Resume Analysis Only
+
+```
+PDF File
+  │
+  ▼
+parse_resume(pdf_path)                  ─── 1 LLM call
+  │  Returns: parsed_resume dict
+  ▼
+get_all_roles()                         ─── 0 LLM calls
+  │  Returns: list of 28 roles
+  ▼
+validate_role_selection(role_ids)       ─── 0 calls (max 3 enforced)
+  │
+  ▼
+┌─ FOR EACH selected role (max 3) ─────────────────┐
+│  analyze_resume(parsed_resume, role_id)           │
+│      → ATS score, skills gap, quality, feedback   │
+│      → 1 LLM call per role                        │
+└───────────────────────────────────────────────────┘
+  │
+  ▼
+generate_upgrade_tip(all_results, parsed_resume)  ─── 1 LLM call
+  │
+  ▼
+Final JSON → ATS scores + feedback + upgrade tip
+```
+
+### Mode 2 — Interview Only
+
+```
+PDF File (required gate)
+  │
+  ▼
+parse_resume(pdf_path)                  ─── 1 LLM call
+  │
+  ▼
+validate_parsed_resume(parsed_resume)  ─── 0 calls (gate check)
+  │
+  ▼
+validate_interview_types(types)        ─── 0 calls
+  │
+  ▼
+┌─ FOR EACH interview type ─────────────────────────┐
+│  generate_interview_questions(                     │
+│      parsed_resume, role_id, type)                 │
+│      → 5 questions  │  1 LLM call per type        │
+└────────────────────────────────────────────────────┘
+  │
+  ▼
+Candidate answers ALL questions (text only, no interruptions)
+  │
+  ▼
+┌─ FOR EACH interview type ─────────────────────────┐
+│  evaluate_interview_answers(                       │
+│      role_id, type, questions_and_answers)          │
+│      → scores + feedback  │  1 LLM call per type  │
+└────────────────────────────────────────────────────┘
+  │
+  ▼
+Full feedback report shown at end
+```
+
+### Mode 3 — Both at Once
+
+```
+PDF File
+  │
+  ▼
+parse_resume(pdf_path)                  ─── 1 LLM call
+  │
+  ▼
+validate_role_selection + validate_interview_types
+  │
+  ├──► Resume Analysis runs first:
+  │      analyze_resume(parsed_resume, role_id)       ─── 1 LLM call
+  │      generate_upgrade_tip(results, parsed_resume) ─── 1 LLM call
+  │
+  │    Analysis complete → Interview starts automatically:
+  │
+  ├──► generate_interview_questions (per type)        ─── 1 LLM call each
+  │      → Candidate answers all questions
+  │
+  └──► evaluate_interview_answers (per type)          ─── 1 LLM call each
+         │
+         ▼
+    Combined Final Report
+      ├── ATS score + skills gap + quality + section feedback
+      ├── Upgrade tip
+      └── Interview scores + per-question feedback + ideal answers
+```
+
+---
+
+## End-to-End Flow — Full Project (Frontend + Backend + AI)
+
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                        FRONTEND (Vercel)                          │
+│                                                                   │
+│  1. User uploads PDF resume                                       │
+│  2. User picks a mode: Analysis / Interview / Both                │
+│  3. User selects role(s) (max 3) and interview types              │
+│  4. Sends HTTP requests to Backend                                │
+│  5. Displays results: scores, feedback, interview evaluation      │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │  HTTP (REST API)
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                   BACKEND (Render, Java Spring Boot)               │
+│                                                                   │
+│  1. Receives PDF + mode + role selection from Frontend             │
+│  2. Saves PDF temporarily                                         │
+│  3. Validates inputs using shared/validators.py                    │
+│  4. Calls AI Module functions in sequence based on mode:           │
+│                                                                   │
+│     Mode 1: parse_resume → validate → analyze_resume (loop) →     │
+│             generate_upgrade_tip → return JSON                    │
+│                                                                   │
+│     Mode 2: parse_resume → validate → generate_questions (loop) → │
+│             collect answers → evaluate_answers (loop) →           │
+│             return JSON                                           │
+│                                                                   │
+│     Mode 3: Mode 1 + Mode 2 combined → return combined JSON      │
+│                                                                   │
+│  5. Serializes AI output with json.dumps()                        │
+│  6. Sends final JSON response back to Frontend                    │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │  Python function calls (or HTTP
+                               │  via FastAPI wrapper at deployment)
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                   AI MODULE (Render, Python)                       │
+│                                                                   │
+│  resume_parser    → Extracts structured data from PDF             │
+│  job_roles        → Serves 28 roles from local JSON (0 API calls) │
+│  ats_scorer       → Scores resume vs role (used by analyzer)      │
+│  resume_analyzer  → Full analysis + upgrade tip generation        │
+│  mock_interview   → Question generation + answer evaluation       │
+│  shared/          → Groq client, retry logic, input validators    │
+│                                                                   │
+│  All functions return plain Python dicts.                          │
+│  All LLM calls go through shared/groq_client.py                   │
+│  All LLM calls have retry logic via shared/retry_handler.py       │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │  HTTPS
+                               ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                     GROQ API (External)                           │
+│                                                                   │
+│  Model: llama-3.3-70b-versatile                                   │
+│  Free tier: 1,000 req/day · 30 req/min · 100K tokens/day         │
+│  Stateless — no candidate data is stored by Groq                  │
+└───────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -681,26 +1000,13 @@ project-ai/
 │   ├── groq_client.py
 │   ├── retry_handler.py
 │   └── validators.py
-├── .env                      ← your API key, never push this
+├── .env                      ← your API key, NEVER push this
 ├── .env.example              ← safe to push, no real key
 ├── .gitignore
 ├── README.md
-└── requirements.txt
+├── requirements.txt
+└── test_mock_interview.py    ← quick test script
 ```
-
----
-
-## Common Errors
-
-| Error | Fix |
-|---|---|
-| `GROQ_API_KEY not found` | Check `.env` file — no spaces around `=` |
-| `ModuleNotFoundError` | Run from `project-ai/` root, not a subfolder |
-| `No module named 'groq'` | Activate venv first — `.\.venv\Scripts\Activate.ps1` |
-| `model decommissioned` | Update `DEFAULT_MODEL` in `shared/groq_client.py` |
-| `Could not extract text` | PDF must be text-based, not a scanned image |
-| `git push rejected` | Run `git pull origin main --rebase` then push again |
-| `pip installs to AppData` | Use `.\.venv\Scripts\python.exe -m pip install` instead |
 
 ---
 
@@ -711,176 +1017,55 @@ This AI module is designed to be **completely stateless**. There is no session s
 | Principle | How it's enforced |
 |---|---|
 | No session state | Every function call is self-contained. Pass all inputs every time. |
-| No LLM memory | Every API call generates a fresh prompt with only the current candidate's data. The LLM has zero knowledge of previous resumes or candidates. |
-| No persistent files | `output/` JSON files are overwritten on every run. Never read stale files from a previous session. |
-| No stored API keys | `GROQ_API_KEY` is loaded from `.env` at runtime into RAM. Never hardcoded, logged, or written to disk. |
-| Input validation only | `shared/validators.py` enforces the 3-role cap and interview type checks as pure functions — no state stored. |
+| No LLM memory | Every API call generates a fresh prompt. The LLM has zero knowledge of previous candidates. |
+| No persistent files | `output/` JSON files are overwritten on every run. Never read stale files. |
+| No stored API keys | `GROQ_API_KEY` is loaded from `.env` at runtime into RAM only. Never hardcoded or logged. |
+| Input validation only | `shared/validators.py` enforces constraints as pure functions — no state stored. |
+| No candidate data retention | Candidate resume data exists only in memory during the request lifecycle. |
 
-**Important for backend:** Treat every incoming request as a brand new session. Do not cache AI results across requests. Always call `parse_resume` fresh for each new PDF upload.
+**For backend:** Treat every request as brand new. Do not cache AI results across requests. Call `parse_resume` fresh for each new PDF upload.
 
----
-
-## End-to-End Flow — AI Module Only
-
-This is the internal flow of the Python AI module. All functions are called from `project-ai/` root.
-
-### Mode 1 — Resume Analysis Only
-
-```
-PDF File
-  │
-  ▼
-parse_resume(pdf_path)                  ─── 1 LLM call
-  │  Returns: parsed_resume dict
-  ▼
-get_all_roles()                         ─── 0 LLM calls
-  │  Returns: list of 28 roles (from local JSON)
-  ▼
-User selects role(s)
-  │
-  ▼
-┌─ FOR EACH selected role ──────────────────────────┐
-│  analyze_resume(parsed_resume, role_id)            │
-│      → ATS score, skills gap, quality, feedback    │
-│      → 1 LLM call per role                         │
-└────────────────────────────────────────────────────┘
-  │
-  ▼
-generate_upgrade_tip(all_role_results, parsed_resume)  ─── 1 LLM call
-  │  Returns: single upgrade tip paragraph
-  ▼
-Final JSON → ATS scores + feedback + upgrade tip
-```
-
-### Mode 2 — Interview Only
-
-```
-PDF File (required gate — resume must be parsed first)
-  │
-  ▼
-parse_resume(pdf_path)                  ─── 1 LLM call
-  │  Returns: parsed_resume dict
-  ▼
-User selects 1 role + interview types
-  (behavioural / technical / domain-specific)
-  │
-  ▼
-┌─ FOR EACH selected interview type ─────────────────┐
-│  generate_interview_questions(                      │
-│      parsed_resume, role_id, interview_type)        │
-│      → 5 focused questions                          │
-│      → 1 LLM call per type                          │
-└─────────────────────────────────────────────────────┘
-  │
-  ▼
-Candidate answers all questions (text only, no interruptions)
-  │
-  ▼
-┌─ FOR EACH interview type ──────────────────────────┐
-│  evaluate_interview_answers(                        │
-│      role_id, interview_type, questions_and_answers) │
-│      → score per question + overall score + feedback │
-│      → 1 LLM call per type                          │
-└─────────────────────────────────────────────────────┘
-  │
-  ▼
-Full feedback report shown at end
-```
-
-### Mode 3 — Both at Once
-
-```
-PDF File
-  │
-  ▼
-parse_resume(pdf_path)                  ─── 1 LLM call
-  │
-  ▼
-User selects 1 role + interview types
-  │
-  ├──► Resume Analysis runs first:
-  │      analyze_resume(parsed_resume, role_id)        ─── 1 LLM call
-  │      generate_upgrade_tip(results, parsed_resume)  ─── 1 LLM call
-  │
-  │    Analysis complete, interview starts automatically:
-  │
-  ├──► generate_interview_questions (per type)         ─── 1 LLM call each
-  │      → Candidate answers all questions
-  │
-  └──► evaluate_interview_answers (per type)           ─── 1 LLM call each
-         │
-         ▼
-    Combined Final Report
-      ├── ATS score + skills gap + quality + section feedback
-      ├── Upgrade tip
-      └── Interview scores + per-question feedback + ideal answers
-```
+**For frontend:** Do not store or display data from a previous user's session. Each page load = fresh state.
 
 ---
 
-## End-to-End Flow — Full Project (Frontend + Backend + AI)
+## Handling Scanned / Image-Based PDFs
 
-This is how the three layers talk to each other at runtime.
+The AI module only supports **text-based PDFs**. If a candidate uploads a scanned/image-based PDF, the parser returns:
+
+```json
+{"error": "Could not extract text. File may be scanned or image-based."}
+```
+
+**Backend:** Check for the `error` key → return HTTP 400 with the error message.
+
+**Frontend:** Show this user-friendly message:
 
 ```
-┌───────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Vercel)                          │
-│                                                                   │
-│  1. User uploads PDF resume                                       │
-│  2. User picks a mode: Analysis / Interview / Both                │
-│  3. User selects role(s) and interview types                      │
-│  4. Sends HTTP requests to Backend                                │
-│  5. Displays results: scores, feedback, interview evaluation      │
-└──────────────────────────────┬────────────────────────────────────┘
-                               │  HTTP (REST API)
-                               ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                   BACKEND (Render, Java Spring Boot)               │
-│                                                                   │
-│  1. Receives PDF + mode + role selection from Frontend             │
-│  2. Saves PDF temporarily                                         │
-│  3. Calls AI Module functions in sequence based on mode:           │
-│                                                                   │
-│     Mode 1: parse_resume → analyze_resume (loop) →                │
-│             generate_upgrade_tip → return JSON                    │
-│                                                                   │
-│     Mode 2: parse_resume → generate_interview_questions (loop) → │
-│             collect answers → evaluate_interview_answers (loop) → │
-│             return JSON                                           │
-│                                                                   │
-│     Mode 3: parse_resume → analyze_resume → upgrade_tip →         │
-│             generate_interview_questions → collect answers →      │
-│             evaluate_interview_answers → return combined JSON     │
-│                                                                   │
-│  4. Serializes AI output with json.dumps()                        │
-│  5. Sends final JSON response back to Frontend                    │
-└──────────────────────────────┬────────────────────────────────────┘
-                               │  Python function calls (or HTTP
-                               │  via FastAPI wrapper at deployment)
-                               ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                   AI MODULE (Render, Python)                       │
-│                                                                   │
-│  resume_parser    → Extracts structured data from PDF             │
-│  job_roles        → Serves 28 roles from local JSON (0 API calls) │
-│  ats_scorer       → Scores resume vs role (used by analyzer)      │
-│  resume_analyzer  → Full analysis + upgrade tip generation        │
-│  mock_interview   → Question generation + answer evaluation       │
-│                                                                   │
-│  All functions return plain Python dicts.                          │
-│  All LLM calls go through shared/groq_client.py                   │
-│  All LLM calls have retry logic via shared/retry_handler.py       │
-└──────────────────────────────┬────────────────────────────────────┘
-                               │  HTTPS
-                               ▼
-┌───────────────────────────────────────────────────────────────────┐
-│                     GROQ API (External)                           │
-│                                                                   │
-│  Model: llama-3.3-70b-versatile                                   │
-│  Free tier: 1,000 req/day · 30 req/min · 100K tokens/day         │
-│  Stateless — no candidate data is stored by Groq                  │
-└───────────────────────────────────────────────────────────────────┘
+"We couldn't read your resume. This usually means your PDF is image-based
+or scanned. Please convert it to a text-based PDF and try again."
 ```
+
+Suggest these free tools:
+- https://www.smallpdf.com
+- https://www.ilovepdf.com
+- https://online2pdf.com
+
+---
+
+## Common Errors & Fixes
+
+| Error | Who sees it | Fix |
+|---|---|---|
+| `GROQ_API_KEY not found` | AI dev | Check `.env` file — no spaces around `=` |
+| `ModuleNotFoundError` | AI dev | Run from `project-ai/` root, not a subfolder |
+| `No module named 'groq'` | AI dev | Activate venv first — `.\.venv\Scripts\Activate.ps1` |
+| `model decommissioned` | AI dev | Update `DEFAULT_MODEL` in `shared/groq_client.py` |
+| `Could not extract text` | Backend/Frontend | PDF is scanned — show user the conversion tools |
+| `Too many roles selected` | Backend | Call `validate_role_selection()` before `analyze_resume()` |
+| `Invalid interview type` | Backend | Only allow `"behavioural"`, `"technical"`, `"domain-specific"` |
+| `git push rejected` | All | Run `git pull origin main --rebase` then push again |
+| `pip installs to AppData` | AI dev | Use `.\.venv\Scripts\python.exe -m pip install` instead |
 
 ---
 
@@ -898,5 +1083,5 @@ The FastAPI `main.py` will be added at deployment time — it is not part of the
 
 ---
 
-**GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview  
-**Last Updated:** Session 5 complete — Mock Interview module done.
+**GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview
+**Last Updated:** Session 5 complete — Mock Interview module + comprehensive teammate documentation.
