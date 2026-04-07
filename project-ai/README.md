@@ -2,7 +2,7 @@
 
 The AI module is the intelligence layer of this project. It handles **resume parsing**, **ATS scoring**, **resume analysis**, **mock interview question generation**, and **answer evaluation**. It is written in Python and uses the **Groq API** (free tier, `llama-3.3-70b-versatile` model) for all LLM calls.
 
-> **This README is the single source of truth.** Every teammate (Backend, Frontend, AI) should read their dedicated section below. If your question is not answered here, open a GitHub Issue.
+> **This README is the single source of truth.** Every teammate (Backend, Frontend, AI) should read their dedicated section below by clicking the 19 clickable sections in the Table of Contents.
 
 ---
 
