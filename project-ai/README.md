@@ -545,7 +545,7 @@ Returns:
 | Global upgrade tip | resume_analyzer | 1 | Once after all roles |
 | Generate Questions | mock_interview | 1 per section | Per interview type selected |
 | Evaluate Answers | mock_interview | 1 per section | Per interview type selected |
-| **Total (Analysis + 1 Interview Section)** | | **4 total** | |
+| **Example Flow Total** | | **6** | (Parse + 2 Roles Analyzed + 1 Tip + 1 Q-Gen + 1 Eval) |
 
 **Groq Free Tier limits (llama-3.3-70b-versatile):**
 
