@@ -280,13 +280,51 @@ The backend integration flow is:
 ```
     1. parse_resume(pdf_path)                        → parsed_resume       [1 LLM call]
     2. get_all_roles()                               → roles list          [0 LLM calls]
-    3. for each role_id: analyze_resume(parsed_resume, role_id)
+    3. validate_role_selection(role_ids)              → check max 3 roles   [0 LLM calls]
+    4. for each role_id: analyze_resume(parsed_resume, role_id)
                                                      → role_result         [1 LLM call each]
-    4. generate_upgrade_tip(all_role_results, parsed_resume)
+    5. generate_upgrade_tip(all_role_results, parsed_resume)
                                                      → upgrade_tip         [1 LLM call]
-    5. best_match = max(all_role_results,
+    6. best_match = max(all_role_results,
            key=lambda r: r["ats"]["overall_score"])  → best match role     [0 LLM calls]
-    6. Return full JSON to frontend
+    7. Return full JSON to frontend
+```
+
+---
+
+### Session Rules
+
+| Rule | Detail |
+|---|---|
+| Max roles per session | **3** (enforced by `validate_role_selection`) |
+| Interview types allowed | `"behavioural"`, `"technical"`, `"domain-specific"` |
+| Resume gate | Resume must be parsed before interview can start |
+| Stateless | No data is stored between sessions — every request is self-contained |
+
+---
+
+### Input Validators
+
+The backend **must** call these validators before invoking AI functions. They are pure functions with zero API calls.
+
+```python
+from shared.validators import validate_role_selection, validate_interview_types, validate_parsed_resume
+
+# Before analysis — enforce 3-role cap
+check = validate_role_selection(["ml_engineer", "backend_engineer"])
+# → {"valid": True}
+
+check = validate_role_selection(["a", "b", "c", "d"])
+# → {"valid": False, "error": "Too many roles selected (4). Maximum allowed is 3 per session."}
+
+# Before interview — validate types
+check = validate_interview_types(["behavioural", "technical"])
+# → {"valid": True}
+
+# Before interview — gate: resume must exist
+check = validate_parsed_resume(parsed_resume)
+# → {"valid": True} or {"valid": False, "error": "..."}
+```
 
 ---
 
@@ -295,17 +333,16 @@ The backend integration flow is:
 You must support three different modes using the functions provided below:
 
 **Mode 1 — Resume Analysis only**
-* Upload PDF → `parse_resume` → Select role(s) → `analyze_resume` (for selected roles) → `generate_upgrade_tip` → show ATS score, feedback, and upgrade tip.
+* Upload PDF → `parse_resume` → Select role(s) (**max 3**) → `validate_role_selection` → `analyze_resume` (for selected roles) → `generate_upgrade_tip` → show ATS score, feedback, and upgrade tip.
 
 **Mode 2 — Interview only**
-* Upload PDF (required gate) → `parse_resume` → Select role → Select interview types (`"behavioural"`, `"technical"`, `"domain-specific"`) → `generate_interview_questions` for each type selected (5 questions per section) → frontend shows all text input fields to the candidate.
+* Upload PDF (required gate) → `parse_resume` → `validate_parsed_resume` → Select role → `validate_interview_types` → `generate_interview_questions` for each type selected (5 questions per section) → frontend shows all text input fields to the candidate.
 * Once candidate submits all answers → `evaluate_interview_answers` for each section → Full feedback report shown at the end. (No mid-interview interruptions!)
 
 **Mode 3 — Both at once**
-* Upload PDF → `parse_resume` → Select role & desired interview types → `analyze_resume` runs.
+* Upload PDF → `parse_resume` → `validate_role_selection` + `validate_interview_types` → Select role & interview types → `analyze_resume` runs.
 * Once analysis is complete, interview starts automatically via `generate_interview_questions` → User answers questions → `evaluate_interview_answers`.
 * Output is a combined final report.
-```
 
 ---
 
@@ -614,7 +651,8 @@ project-ai/
 ├── shared/
 │   ├── __init__.py
 │   ├── groq_client.py
-│   └── retry_handler.py
+│   ├── retry_handler.py
+│   └── validators.py
 ├── .env                      ← your API key, never push this
 ├── .env.example              ← safe to push, no real key
 ├── .gitignore
@@ -638,11 +676,19 @@ project-ai/
 
 ---
 
-## Data Privacy
+## Stateless Architecture & Data Privacy
 
-This AI module is completely stateless between sessions. There is no accumulated history passed to the LLM — every API call generates a fresh prompt with only the current candidate's data. The LLM has zero knowledge of any previous resumes or candidates.
+This AI module is designed to be **completely stateless**. There is no session storage, no database, and no accumulated history.
 
-**Important for backend:** The `output/` JSON files are overwritten on every run. Always process a fresh upload for each candidate and never read leftover files from a previous session.
+| Principle | How it's enforced |
+|---|---|
+| No session state | Every function call is self-contained. Pass all inputs every time. |
+| No LLM memory | Every API call generates a fresh prompt with only the current candidate's data. The LLM has zero knowledge of previous resumes or candidates. |
+| No persistent files | `output/` JSON files are overwritten on every run. Never read stale files from a previous session. |
+| No stored API keys | `GROQ_API_KEY` is loaded from `.env` at runtime into RAM. Never hardcoded, logged, or written to disk. |
+| Input validation only | `shared/validators.py` enforces the 3-role cap and interview type checks as pure functions — no state stored. |
+
+**Important for backend:** Treat every incoming request as a brand new session. Do not cache AI results across requests. Always call `parse_resume` fresh for each new PDF upload.
 
 ---
 
