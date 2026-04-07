@@ -65,7 +65,7 @@ The AI module handles resume parsing and resume vs. job role analysis. It is wri
 ## Project Repository Structure
 
 ```
-smart-resume-analyzer/
+smart-resume-analyzer-and-interview/
 ├── project-ai/         ← Python AI module (AI/ML teammate)
 ├── project-backend/    ← Java Spring Boot (backend teammate)
 └── project-frontend/   ← Frontend (frontend teammate)
@@ -81,15 +81,15 @@ Open a terminal (Command Prompt, PowerShell, or Git Bash) and run:
 
 ```bash
 cd Desktop
-git clone https://github.com/ishan-nag/smart-resume-analyzer.git
-cd smart-resume-analyzer
+git clone https://github.com/ishan-nag/smart-resume-analyzer-and-interview.git
+cd smart-resume-analyzer-and-interview
 ```
 
 Your folder structure on Desktop will look like:
 
 ```
 Desktop/
-└── smart-resume-analyzer/
+└── smart-resume-analyzer-and-interview/
     ├── project-ai/
     ├── project-backend/
     └── project-frontend/
@@ -157,7 +157,7 @@ git push origin backend/resume-upload-api
 
 ### Step 6 — Open a Pull Request (PR) to main
 
-1. Go to the repository on GitHub: https://github.com/ishan-nag/smart-resume-analyzer
+1. Go to the repository on GitHub: https://github.com/ishan-nag/smart-resume-analyzer-and-interview
 2. You will see a prompt: **"Compare & pull request"** — click it
 3. Set the base branch to `main` and the compare branch to your branch
 4. Write a short title and description of what you changed
@@ -201,7 +201,7 @@ git commit -m "Resolve merge conflicts"
 
 ```powershell
 # Go into the AI module folder
-cd Desktop\smart-resume-analyzer\project-ai
+cd Desktop\smart-resume-analyzer-and-interview\project-ai
 
 # Create a virtual environment
 python -m venv .venv
@@ -660,5 +660,5 @@ The FastAPI `main.py` will be added at deployment time — it is not part of the
 
 ---
 
-**GitHub:** https://github.com/ishan-nag/smart-resume-analyzer  
+**GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview  
 **Last Updated:** Session 5 complete — Mock Interview module done.
