@@ -18,3 +18,9 @@ python-dotenv>=1.0.0
 # ── PDF text extraction ──
 # Used by: resume_parser
 pdfplumber>=0.10.0
+
+# ── Web API Framework ──
+# Used by: main.py
+fastapi>=0.100.0
+uvicorn>=0.20.0
+python-multipart>=0.0.6
