@@ -8,12 +8,17 @@ def run_tests():
         from mock_interview.evaluator import evaluate_interview_answers
 
         print("Testing Generator...")
-        
-        mock_resume = {
-            "skills": ["python", "django", "react", "sql"],
-            "summary": "Full stack developer with 2 years of experience."
-        }
-        
+        import glob
+        resume_files = sorted(glob.glob("output/parsed_resume*.json"))
+        if not resume_files:
+            print("ERROR: No parsed resume files found in output/. Run resume_parser first.")
+            return
+            
+        resume_path = resume_files[0]
+        print(f"Using actual resume: {resume_path}")
+        with open(resume_path, "r", encoding="utf-8") as f:
+            mock_resume = json.load(f)
+
         gen_result = generate_interview_questions(
             parsed_resume=mock_resume,
             role_id="backend_engineer",
