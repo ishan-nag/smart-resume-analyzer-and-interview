@@ -138,8 +138,8 @@ quality scores, section-by-section feedback, and a global upgrade tip.
 
 ```
 User uploads PDF (required — we need their background) → Selects 1 role →
-Selects interview types (can pick ALL 3: behavioural + technical + domain-specific) →
-Gets questions ONE AT A TIME (5 per type, up to 15 total) →
+Interview automatically includes all 3 domains (Behavioural, Technical, Domain-specific) →
+Gets questions ONE AT A TIME (15 total questions) →
 Answers each question before the next one appears →
 Gets full feedback report with scores, feedback per question, and ideal answers.
 ```
@@ -157,9 +157,9 @@ Gets full feedback report with scores, feedback per question, and ideal answers.
 > "I want the full experience — analyze my resume AND interview me."
 
 ```
-User uploads PDF → Selects 1 role + interview types (can pick all 3) →
-Resume analysis runs first → Interview starts automatically after →
-Questions appear one at a time → User answers each before next appears →
+User uploads PDF → Selects 1 role →
+Resume analysis runs first → Interview starts automatically after (including all 3 domains) →
+Questions appear one at a time (15 total) → User answers each before next appears →
 Gets a combined final report with both resume analysis results AND interview feedback.
 ```
 
@@ -333,8 +333,7 @@ The FastAPI wrapper standardizes all errors into proper network HTTP status code
 |---|---|
 | **Landing / Upload** | File upload (PDF only) + mode selector (Analysis / Interview / Both) |
 | **Role Selection** | Dropdown or card grid of roles — max 3 selectable for analysis, 1 for interview |
-| **Interview Type Selection** | Checkboxes: Behavioural, Technical, Domain-specific — **candidate can select all 3** (Mode 2 & 3 only) |
-| **Interview Questions** | Display questions **one at a time** — candidate answers current question before next appears. Show progress indicator (e.g., "Question 3 of 15"). Up to 15 questions total if all 3 types selected. |
+| **Interview Questions** | Display questions **one at a time** — candidate answers current question before next appears. Show progress indicator (e.g., "Question 3 of 15"). Exactly 15 questions across 3 domains. |
 | **Results — Analysis** | ATS scores, skills gap, quality bars, section feedback, upgrade tip |
 | **Results — Interview** | Per-question scores, feedback, ideal answers, overall score |
 | **Results — Combined** | Both analysis + interview results on one page (Mode 3) |
@@ -454,7 +453,7 @@ The FastAPI wrapper standardizes all errors into proper network HTTP status code
 ### UX rules to follow
 
 - **Max 3 roles selectable** — disable the UI after 3 are selected.
-- **All 3 interview types selectable** — candidate can pick any combination: 1, 2, or all 3.
+- **All 3 interview domains are mandatory** — there is no checkbox; the candidate automatically does the Behavioural, Technical, and Domain-specific questions.
 - **PDF only** — reject non-PDF files on the frontend before uploading.
 - **Sequential questions (one at a time)** — show ONE question on screen. Candidate types their answer and submits it. Only then does the next question appear. Never show multiple questions at once.
 - **Progress indicator** — show "Question X of Y" (e.g., "Question 3 of 15") and optionally the current section label (e.g., "Behavioural").
