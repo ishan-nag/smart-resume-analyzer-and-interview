@@ -246,194 +246,80 @@ python test_mock_interview.py
 
 ## FOR THE BACKEND DEVELOPER — Complete Integration Guide
 
-> **This section is specifically for you.** Read this thoroughly and you should be able to integrate without asking the AI team anything.
+> **This section is specifically for you.** We have wrapped the entire Python AI module in a blazing fast **FastAPI microservice** (`main.py`). You do NOT need to write any Python code! You will connect to it over standard HTTP REST calls just like any third-party external API.
 
-### How to call AI functions
+### Step 1: Start the AI Microservice
 
-Every AI function:
-- Takes **plain Python dicts/strings** as input
-- Returns a **plain Python dict** as output
-- You serialize the output with `json.dumps()` and send it to the frontend
-
-### Step-by-step: What your API endpoints should do
-
-#### Endpoint 1: Upload Resume (all modes need this)
-
-```python
-from resume_parser import parse_resume
-
-# 1. Save uploaded PDF to a temp path
-pdf_path = "uploads/candidate_123.pdf"
-
-# 2. Parse it
-parsed_resume = parse_resume(pdf_path)
-
-# 3. Check for errors
-if "error" in parsed_resume:
-    return HTTP_400(parsed_resume["error"])
-    # Possible errors:
-    #   "File not found: uploads/candidate_123.pdf"
-    #   "Could not extract text. File may be scanned or image-based."
-
-# 4. Success — store parsed_resume in memory for this request
-# DO NOT persist it to a database — system is stateless
+Have the AI module running in the background during local development:
+```powershell
+cd project-ai
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m uvicorn main:app --port 8000 --reload
 ```
+This starts the AI background server on `http://localhost:8000`.
 
-#### Endpoint 2: Get Available Roles (for dropdown)
+### Step 2: Use the Interactive Web Docs (Swagger)
 
-```python
-from job_roles import get_all_roles
+FastAPI automatically generates beautiful, interactive API documentation. 
+Open your browser and navigate to: **[http://localhost:8000/docs](http://localhost:8000/docs)**
 
-roles = get_all_roles()
-# Returns list of 28 role dicts — send directly to frontend
-# Zero API calls — reads from local JSON
-```
+You will see all 5 endpoints, the exact JSON shapes they require, and you can even upload your PDF and test them live without writing any code.
 
-#### Endpoint 3: Mode 1 — Resume Analysis
+### Step 3: The 5 Endpoints to Call
 
-```python
-from shared.validators import validate_role_selection
-from resume_analyzer import analyze_resume, generate_upgrade_tip
+From your Java Spring Boot app, use `RestTemplate` or `WebClient` to make HTTP requests to these endpoints. The API handles ALL routing, validation, error catching, and JSON structuring internally!
 
-# 1. Validate role selection (max 3, no duplicates)
-check = validate_role_selection(selected_role_ids)
-if not check["valid"]:
-    return HTTP_400(check["error"])
+#### Endpoint 1: Upload Resume (`POST /api/upload`)
+- **Input:** Multipart form-data with parameter `file` (the PDF).
+- **Action:** Extracts text and structures it into JSON using the LLM.
+- **Output:** The full `parsed_resume` JSON. Save this JSON in your Java memory to pass to future steps. Do not store it in a database.
 
-# 2. Run analysis for each role
-all_results = []
-for role_id in selected_role_ids:
-    result = analyze_resume(parsed_resume, role_id)
-    if "error" not in result:
-        all_results.append(result)
+#### Endpoint 2: Get Available Roles (`GET /api/roles`)
+- **Input:** None.
+- **Output:** List of 28 roles to display in the frontend dropdown.
 
-# 3. Generate upgrade tip (call ONCE, not per role)
-tip = generate_upgrade_tip(all_results, parsed_resume)
+#### Endpoint 3: Resume Analysis (`POST /api/analyze`)
+- **Input JSON Request Body:** `{"parsed_resume": {...}, "role_ids": ["ml_engineer", "backend_engineer"]}`
+- **Action:** Generates ATS scores for up to 3 roles simultaneously AND writes the cross-role upgrade tip.
+- **Output:** Combined list of `analyses` and the final `upgrade_tip`.
 
-# 4. Find best match
-best_match = max(all_results, key=lambda r: r["ats"]["overall_score"])
+#### Endpoint 4: Generate Mock Interview (`POST /api/interview/generate`)
+- **Input JSON Request Body:** `{"parsed_resume": {...}, "role_id": "ml_engineer", "interview_types": ["behavioural", "technical"]}`
+- **Action:** Generates 5 high-quality questions per selected interview type.
+- **Output:** Returns a `sequential_questions` array (a flat list of questions so the frontend can display them smoothly one-by-one).
 
-# 5. Return to frontend
-return {
-    "mode": "analysis",
-    "results": all_results,
-    "best_match": best_match,
-    "upgrade_tip": tip["upgrade_tip"],
-    "candidate_name": parsed_resume.get("name", "Unknown"),
-    "primary_stack": ", ".join(parsed_resume.get("skills", [])[:3])
-}
-```
+#### Endpoint 5: Evaluate Interview (`POST /api/interview/evaluate`)
+- **Input JSON Request Body:**
+  ```json
+  {
+    "role_id": "ml_engineer",
+    "submitted_answers": {
+      "behavioural": [
+        {"question": "Tell me about a time...", "answer": "I did X..."}
+      ],
+      "technical": [
+        {"question": "How do you scale...", "answer": "Use a load balancer..."}
+      ]
+    }
+  }
+  ```
+- **Action:** Evaluates all candidate answers at the very end of the interview.
+- **Output:** Full grading breakdown, scores out of 10, and AI-written *ideal answers*.
 
-#### Endpoint 4: Mode 2 — Interview Only
+### Error Handling
 
-```python
-from shared.validators import validate_parsed_resume, validate_interview_types
-from mock_interview import generate_interview_questions, evaluate_interview_answers
+The FastAPI wrapper standardizes all errors into proper network HTTP status codes. Your Java code should check the HTTP response code!
+- **`200 OK`**: Success.
+- **`400 Bad Request`**: You provided bad inputs (e.g., `"string"` instead of a real role ID, >3 roles selected, or you sent a non-PDF file). The JSON response `detail` parameter will explicitly state what you did wrong.
+- **`500 Internal Server Error`**: The external Groq LLM API failed to respond, or python panics. Usually fixed by checking your `GROQ_API_KEY` in `.env`.
 
-# 1. Validate resume exists
-check = validate_parsed_resume(parsed_resume)
-if not check["valid"]:
-    return HTTP_400(check["error"])
-
-# 2. Validate interview types (candidate can select all 3)
-check = validate_interview_types(selected_interview_types)
-if not check["valid"]:
-    return HTTP_400(check["error"])
-
-# 3. Generate questions for ALL selected types upfront
-#    This builds the full question pool before the interview begins.
-all_questions = {}  # {"behavioural": [q1..q5], "technical": [q1..q5], ...}
-for interview_type in selected_interview_types:
-    result = generate_interview_questions(parsed_resume, role_id, interview_type)
-    if result["status"] == "success":
-        all_questions[interview_type] = result["questions"]
-    else:
-        return HTTP_500(result["error"])
-
-# 4. Build a flat ordered list for sequential display
-#    Frontend will show these ONE AT A TIME.
-sequential_questions = []
-for interview_type in selected_interview_types:
-    for i, question in enumerate(all_questions[interview_type]):
-        sequential_questions.append({
-            "interview_type": interview_type,
-            "question_number": i + 1,
-            "question": question
-        })
-
-# 5. Send to frontend — frontend shows Q1, waits for answer, shows Q2, etc.
-return {
-    "questions": all_questions,             # grouped by type (for evaluation later)
-    "sequential_questions": sequential_questions,  # flat ordered list (for display)
-    "total_questions": len(sequential_questions)
-}
-
-# ──────────── LATER, when frontend sends back ALL answers ────────────
-#
-# Frontend accumulates answers in a dict grouped by type:
-# {
-#     "behavioural": [{"question": "Q1?", "answer": "..."}, ...],
-#     "technical":   [{"question": "Q1?", "answer": "..."}, ...],
-#     "domain-specific": [{"question": "Q1?", "answer": "..."}, ...]
-# }
-#
-# This is sent to backend ONLY after ALL questions are answered.
-
-# 6. Evaluate answers for each type
-all_evaluations = {}
-for interview_type, qa_list in submitted_answers.items():
-    result = evaluate_interview_answers(role_id, interview_type, qa_list)
-    if result["status"] == "success":
-        all_evaluations[interview_type] = result["evaluation"]
-
-# 7. Return full feedback report
-return {"mode": "interview", "evaluations": all_evaluations}
-```
-
-#### Endpoint 5: Mode 3 — Both
-
-```python
-# Combine Endpoint 3 and Endpoint 4 above.
-# Run resume analysis first, then interview.
-# Return combined JSON:
-return {
-    "mode": "both",
-    "analysis": { "results": all_results, "best_match": best_match, "upgrade_tip": tip },
-    "interview": { "evaluations": all_evaluations }
-}
-```
-
-### Error handling checklist
-
-Every AI function can return an `"error"` key. **Always check for it:**
-
-```python
-result = some_ai_function(...)
-if "error" in result:
-    return HTTP_400_or_500(result["error"])
-```
-
-| Error message | HTTP code | When it happens |
-|---|---|---|
-| `"File not found: ..."` | 400 | PDF path is wrong |
-| `"Could not extract text..."` | 400 | Scanned/image PDF |
-| `"Role not found: ..."` | 400 | Invalid role_id |
-| `"Too many roles selected..."` | 400 | More than 3 roles |
-| `"Invalid interview type..."` | 400 | Typo in type string |
-| `"Resume must be uploaded..."` | 400 | Interview without resume |
-| `"Failed to generate questions..."` | 500 | LLM call failed after retries |
-| `"Failed to evaluate answers..."` | 500 | LLM call failed after retries |
-| `"GROQ_API_KEY not found"` | 500 | `.env` not configured |
-
-### What NOT to do
-
-- ❌ Do NOT call `ats_scorer` directly — `analyze_resume` already uses it internally.
-- ❌ Do NOT cache AI results across requests — system is stateless.
-- ❌ Do NOT store parsed resumes in a database — process fresh each time.
-- ❌ Do NOT allow more than 3 roles — always call `validate_role_selection` first.
-- ❌ Do NOT call `generate_upgrade_tip` per role — call it ONCE after all roles are done.
-- ❌ Do NOT show interview feedback mid-interview — collect ALL answers first, THEN evaluate.
-- ❌ **Do NOT use async/parallel threads for LLM calls.** Mode 3 takes time, but hitting Groq with multiple requests at the exact same millisecond will trigger a `429 Too Many Requests` error on the free tier. Keep all AI function calls STRICTLY sequential.
+### What NOT to do for Backend Devs
+- ❌ Do NOT try to run Python shell commands from Java. Just make `http://localhost:8000/api/...` requests!
+- ❌ Do NOT cache AI results across requests — the system is strictly stateless.
+- ❌ Do NOT store parsed resumes in a database — process fresh each time from the frontend flow.
+- ❌ Do NOT rely on Java to enforce the "Max 3 Roles Selected" rule—the Python API rigorously blocks requests with 4+ roles natively.
+- ❌ **Do NOT use async/parallel threads for your HTTP calls.** Hit the AI API endpoints purely sequentially. Hitting it simultaneously triggers `429 Too Many Requests` API ratelimits.
 
 ---
 
