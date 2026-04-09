@@ -663,7 +663,7 @@ if __name__ == "__main__":
                 print(f"    [{section.upper()}] Score: {data['score']} — {data['feedback']}")
                 if data["improvements"]:
                     for tip in data["improvements"]:
-                        print(f"      → {tip}")
+                        print(f"      -> {tip}")
 
             save_analysis_result(result, f"output/analysis_{role_id}.json")
 
