@@ -461,6 +461,7 @@ The FastAPI wrapper standardizes all errors into proper network HTTP status code
 - **Accumulate answers in a dict** — as the candidate answers each question, store it in a dict grouped by interview type: `{"behavioural": [{q, a}, ...], "technical": [...], ...}`. Send this dict to the backend after the last question.
 - **Interview answers are text only** — provide a `<textarea>` input, no audio/video.
 - **Dynamic Loading Text (Crucial for Demo/UX)** — Because complex flows (like Mode 3) make several sequential LLM calls, it can take 15–30 seconds. To make it feel fast, show a spinner whose text changes every few seconds. (e.g., *0s:* "Extracting resume data...", *4s:* "Matching against ATS algorithms...", *8s:* "Generating tailored interview questions...", *12s:* "Finalizing report..."). Do not just show a static "Loading..." screen.
+- **Frontend State Optimization** — Do not force the user to re-upload their PDF for subsequent interviews. Cache the `parsed_resume` JSON in the browser's memory. If they finish an interview and start a second interview for a NEW role, just silently send the exact same cached JSON to the API along with the new `role_id`.
 - **Error messages** — if the backend returns an error, display it to the user. For scanned PDFs, suggest these tools: [smallpdf.com](https://www.smallpdf.com), [ilovepdf.com](https://www.ilovepdf.com), [online2pdf.com](https://online2pdf.com)
 
 ---
