@@ -1,5 +1,6 @@
 package com.abhi.backend.service;
 
+import com.abhi.backend.exception.AiServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
@@ -7,6 +8,9 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -29,15 +33,19 @@ public class ResumeService {
                     String.class
             );
             return response.getBody();
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
+
+        } catch (ResourceAccessException e) {
+            throw new AiServiceException("AI service is currently unavailable!", 503);
+        } catch (HttpClientErrorException e) {
+            throw new AiServiceException("Bad request: " + e.getMessage(), 400);
+        } catch (HttpServerErrorException e) {
+            throw new AiServiceException("AI service error: " + e.getMessage(), 500);
         }
     }
 
     // Service 2: Upload resume PDF
     public String uploadResume(MultipartFile file) {
         try {
-            // Prepare the PDF file
             ByteArrayResource fileResource = new ByteArrayResource(file.getBytes()) {
                 @Override
                 public String getFilename() {
@@ -45,30 +53,31 @@ public class ResumeService {
                 }
             };
 
-            // Build request body
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
             body.add("file", fileResource);
 
-            // Set headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            // Create request
             HttpEntity<MultiValueMap<String, Object>> requestEntity =
                     new HttpEntity<>(body, headers);
 
-            // Call AI service
             ResponseEntity<String> response = restTemplate.exchange(
                     aiServiceUrl + "/api/upload",
                     HttpMethod.POST,
                     requestEntity,
                     String.class
             );
-
             return response.getBody();
 
+        } catch (ResourceAccessException e) {
+            throw new AiServiceException("AI service is currently unavailable!", 503);
+        } catch (HttpClientErrorException e) {
+            throw new AiServiceException("Bad request: " + e.getMessage(), 400);
+        } catch (HttpServerErrorException e) {
+            throw new AiServiceException("AI service error: " + e.getMessage(), 500);
         } catch (Exception e) {
-            return "Error: " + e.getMessage();
+            throw new AiServiceException("Error processing file: " + e.getMessage(), 500);
         }
     }
 
@@ -87,11 +96,14 @@ public class ResumeService {
                     requestEntity,
                     String.class
             );
-
             return response.getBody();
 
-        } catch (Exception e) {
-            return "Error: " + e.getMessage();
+        } catch (ResourceAccessException e) {
+            throw new AiServiceException("AI service is currently unavailable!", 503);
+        } catch (HttpClientErrorException e) {
+            throw new AiServiceException("Bad request: " + e.getMessage(), 400);
+        } catch (HttpServerErrorException e) {
+            throw new AiServiceException("AI service error: " + e.getMessage(), 500);
         }
     }
 }
