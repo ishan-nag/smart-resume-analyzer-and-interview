@@ -982,10 +982,17 @@ The AI module only supports **text-based PDFs**. If a candidate uploads a scanne
 or scanned. Please convert it to a text-based PDF and try again."
 ```
 
-Suggest these free tools:
-- https://www.smallpdf.com
-- https://www.ilovepdf.com
-- https://online2pdf.com
+Suggest these free tools to candidates:
+- **SmallPDF (OCR feature):** https://www.smallpdf.com/ocr-pdf
+- **ILovePDF (OCR feature):** https://www.ilovepdf.com/ocr-pdf
+- **Online2PDF:** https://online2pdf.com
+- **Google Drive:** Upload the PDF → Right-click → "Open with Google Docs" (This automatically performs high-quality OCR for free).
+
+**What to search on Google for other options:**
+- *"Convert scanned PDF to searchable PDF"*
+- *"OCR PDF to text online free"*
+- *"Convert image-based PDF to readable PDF"*
+- *"Fix non-selectable text in PDF"*
 
 ---
 
@@ -1005,19 +1012,15 @@ Suggest these free tools:
 
 ---
 
-## Deployment Notes
-
-At deployment time, the AI module will run as a separate Python service on Render with a FastAPI wrapper (`main.py`). The Spring Boot backend will call it via HTTP.
+At deployment time, the AI module will run as a separate Python service on Render using the included **FastAPI wrapper (`main.py`)**. The Spring Boot backend will call it via standard HTTP REST calls.
 
 ```
 Frontend (Vercel) → Backend (Render, Java) → AI Module (Render, Python) → Groq API
 ```
 
-> Render free tier sleeps after 15 minutes of inactivity. Open the app at least 1 minute before your demo.
-
-The FastAPI `main.py` will be added at deployment time — it is not part of the current module.
+> **Note:** Render free tier services "sleep" after 15 minutes of inactivity. Always open the URL at least 1 minute before your project demo to let the service "wake up".
 
 ---
 
 **GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview
-**Last Updated:** Session 6 — Sequential one-at-a-time question flow + all-3-types selection for mock interviews.
+**Last Updated:** Session 6 — FastAPI Microservice Implementation + Mandatory 15-Question Mock Interview Flow.
