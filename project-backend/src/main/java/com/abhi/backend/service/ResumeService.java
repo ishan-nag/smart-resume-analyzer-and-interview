@@ -19,33 +19,70 @@ public class ResumeService {
     @Value("${ai.service.url}")
     private String aiServiceUrl;
 
-    public String analyzeResume(MultipartFile resume, String jobRole) {
-
+    // Service 1: Get all roles
+    public String getRoles() {
         try {
-            // Step 1: Prepare the PDF file
-            ByteArrayResource fileResource = new ByteArrayResource(resume.getBytes()) {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    aiServiceUrl + "/api/roles",
+                    HttpMethod.GET,
+                    null,
+                    String.class
+            );
+            return response.getBody();
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    // Service 2: Upload resume PDF
+    public String uploadResume(MultipartFile file) {
+        try {
+            // Prepare the PDF file
+            ByteArrayResource fileResource = new ByteArrayResource(file.getBytes()) {
                 @Override
                 public String getFilename() {
-                    return resume.getOriginalFilename();
+                    return file.getOriginalFilename();
                 }
             };
 
-            // Step 2: Build the request body
+            // Build request body
             MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-            body.add("resume", fileResource);
-            body.add("jobRole", jobRole);
+            body.add("file", fileResource);
 
-            // Step 3: Set headers
+            // Set headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            // Step 4: Create the request
+            // Create request
             HttpEntity<MultiValueMap<String, Object>> requestEntity =
                     new HttpEntity<>(body, headers);
 
-            // Step 5: Call AI service
+            // Call AI service
             ResponseEntity<String> response = restTemplate.exchange(
-                    aiServiceUrl + "/analyze",
+                    aiServiceUrl + "/api/upload",
+                    HttpMethod.POST,
+                    requestEntity,
+                    String.class
+            );
+
+            return response.getBody();
+
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+    // Service 3: Analyze resume
+    public String analyzeResume(String requestBody) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            HttpEntity<String> requestEntity =
+                    new HttpEntity<>(requestBody, headers);
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    aiServiceUrl + "/api/analyze",
                     HttpMethod.POST,
                     requestEntity,
                     String.class
