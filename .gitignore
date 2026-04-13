@@ -9,6 +9,16 @@ project-ai/.env
 project-backend/target/
 project-backend/.env
 
+# IntelliJ files
+.idea/
+*.iml
+
+# Maven build folder
+target/
+
+# Environment files
+.env
+
 # Frontend
 project-frontend/node_modules/
 project-frontend/.env
