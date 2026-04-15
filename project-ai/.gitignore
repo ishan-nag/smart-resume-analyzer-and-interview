@@ -1,5 +1,7 @@
 # ── Environment Variables (NEVER push to GitHub) ──
 .env
+.env.*
+*.env
 
 # ── Virtual Environment ──
 .venv/

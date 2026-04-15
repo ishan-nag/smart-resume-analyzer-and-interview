@@ -21,7 +21,7 @@ public class ResumeController {
     }
 
     // Endpoint 2: Upload resume PDF
-    @PostMapping("/resume/upload")
+    @PostMapping("/upload")
     public ResponseEntity<String> uploadResume(
             @RequestPart("file") MultipartFile file) {
         String parsedResume = resumeService.uploadResume(file);
@@ -29,7 +29,7 @@ public class ResumeController {
     }
 
     // Endpoint 3: Analyze resume
-    @PostMapping("/resume/analyze")
+    @PostMapping("/analyze")
     public ResponseEntity<String> analyzeResume(
             @RequestBody String requestBody) {
         String result = resumeService.analyzeResume(requestBody);

@@ -1,0 +1,19 @@
+# Java/Spring Boot
+target/
+*.jar
+*.war
+*.log
+
+# Environment
+.env
+.env.*
+*.env
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Local Maven
+maven.zip
+maven_extracted/

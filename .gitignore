@@ -1,4 +1,4 @@
-﻿# Python
+# Python
 project-ai/.venv/
 project-ai/output/
 **/__pycache__/
@@ -18,6 +18,9 @@ target/
 
 # Environment files
 .env
+.env.*
+*.env
+*.local
 
 # Frontend
 project-frontend/node_modules/
