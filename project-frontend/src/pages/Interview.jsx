@@ -100,7 +100,7 @@ export function Interview() {
       )}
 
       {/* Top Progress Bar & Dots */}
-      <div className="bg-white p-6 rounded-brand border border-[0.5px] border-brand-mid/30 shadow-sm mb-6 shrink-0">
+      <div className="bg-white dark:bg-[#1a1a2e] p-6 rounded-brand border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 shadow-sm mb-6 shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
           <div>
             <h2 className="text-lg font-medium text-brand-dark dark:text-gray-100">
@@ -146,7 +146,7 @@ export function Interview() {
       </div>
 
       {/* Answer Area */}
-      <div className="flex-1 min-h-0 flex flex-col bg-white rounded-brand border border-[0.5px] border-brand-mid/30 shadow-sm p-2">
+      <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-[#1a1a2e] rounded-brand border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 shadow-sm p-2">
         <textarea
           value={currentAnswer}
           onChange={(e) => setCurrentAnswer(e.target.value)}
@@ -173,8 +173,8 @@ function DomainBadge({ label, active }) {
     <span className={clsx(
       "px-3 py-1 rounded-full text-[10px] sm:text-xs font-medium transition-colors border",
       active 
-        ? "bg-brand-light text-brand-primary border-brand-primary/30" 
-        : "bg-gray-50 text-brand-mid dark:text-gray-400 border-brand-mid/20"
+        ? "bg-brand-light dark:bg-brand-primary/20 text-brand-primary border-brand-primary/30" 
+        : "bg-gray-50 dark:bg-white/5 text-brand-mid dark:text-gray-400 border-brand-mid/20"
     )}>
       {label}
     </span>
