@@ -44,8 +44,8 @@ export function Results() {
     return (
       <div className="space-y-6 animate-in fade-in">
         {/* Big Circular Score */}
-        <div className="bg-white p-8 border border-[0.5px] border-brand-mid/30 rounded-brand flex flex-col md:flex-row items-center gap-8 justify-center min-h-[250px] shadow-sm text-center md:text-left">
-          <div className="shrink-0 relative w-32 h-32 rounded-full border-8 border-brand-mid/20 flex flex-col items-center justify-center bg-white shadow-inner">
+        <div className="bg-white dark:bg-[#1a1a2e] p-8 border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 rounded-brand flex flex-col md:flex-row items-center gap-8 justify-center min-h-[250px] shadow-sm text-center md:text-left">
+          <div className="shrink-0 relative w-32 h-32 rounded-full border-8 border-brand-mid/20 flex flex-col items-center justify-center bg-white dark:bg-[#1a1a2e] shadow-inner">
             <div className="absolute inset-0 border-8 border-brand-primary rounded-full" style={{ clipPath: `inset(${100 - overallCombined}% 0 0 0)` }}></div>
             <span className="text-3xl font-bold text-brand-dark dark:text-gray-100 z-10">{overallCombined}%</span>
             <span className="text-[10px] font-medium text-brand-mid dark:text-gray-400 uppercase z-10">Overall</span>
@@ -65,7 +65,7 @@ export function Results() {
         {/* 2 Column Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {hasAnalysis && (
-            <div className="bg-white p-6 border border-[0.5px] border-brand-mid/30 rounded-brand shadow-sm">
+            <div className="bg-white dark:bg-[#1a1a2e] p-6 border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 rounded-brand shadow-sm">
               <h3 className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-4">ATS Match by Role</h3>
               <div className="space-y-4">
                 {analysisResults.map((r, i) => (
@@ -79,7 +79,7 @@ export function Results() {
           )}
 
           {hasInterview && (
-            <div className="bg-white p-6 border border-[0.5px] border-brand-mid/30 rounded-brand shadow-sm">
+            <div className="bg-white dark:bg-[#1a1a2e] p-6 border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 rounded-brand shadow-sm">
               <h3 className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-4">Interview Summary</h3>
               <p className="text-sm text-brand-dark dark:text-gray-100 leading-relaxed mb-4">
                 {evaluationResults?.evaluation?.overall_summary || "Good effort overall."}
@@ -158,7 +158,7 @@ function EvaluationRow({ data }) {
   else if (data.score_out_of_10 >= 5) scoreColor = 'bg-brand-warningBg text-brand-warning border-brand-warning/20';
 
   return (
-    <div className="bg-white border border-[0.5px] border-brand-mid/30 rounded-brand shadow-sm overflow-hidden transition-all duration-300">
+    <div className="bg-white dark:bg-[#1a1a2e] border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 rounded-brand shadow-sm overflow-hidden transition-all duration-300">
       <div 
         className="p-5 flex items-start gap-4 cursor-pointer hover:bg-brand-light/20"
         onClick={() => setExpanded(!expanded)}
@@ -176,7 +176,7 @@ function EvaluationRow({ data }) {
       </div>
       
       {expanded && (
-        <div className="p-5 pt-0 bg-white border-t border-[0.5px] border-brand-mid/10 animate-in slide-in-from-top-2">
+        <div className="p-5 pt-0 bg-white dark:bg-[#1a1a2e] border-t border-[0.5px] border-brand-mid/10 animate-in slide-in-from-top-2">
           <div className="mt-4 p-4 bg-brand-light/50 rounded-brand">
             <span className="text-xs font-bold text-brand-primary uppercase tracking-wide">AI Feedback</span>
             <p className="text-sm text-brand-dark dark:text-gray-100 mt-2 leading-relaxed">{data.feedback}</p>
