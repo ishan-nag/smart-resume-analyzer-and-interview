@@ -11,12 +11,22 @@ Experience summary: {experience}
 
 Your task is to generate exactly 5 interview questions tailored to the candidate's background and the role.
 
-CRITICAL CONSTRAINT: The questions must be highly concise and focused so that a candidate can meaningfully answer them in a short paragraph (3-4 lines of text). Avoid overly broad essay-style questions.
+STRICT RULES — YOU MUST FOLLOW ALL OF THESE:
+
+1. SHORT ANSWER DESIGN: Every question MUST be answerable in 2-4 sentences. Do NOT ask broad essay questions like "Explain your entire experience with X". Ask pointed, precise questions that have a clear short answer.
+   Good example: "What is the difference between a process and a thread?"
+   Bad example: "Tell me about your overall understanding of operating systems."
+
+2. NO REPETITION — ZERO TOLERANCE: All 5 questions must be completely unique. Do NOT ask the same concept twice in different words. Before writing each question, verify you have not already asked about the same topic, framework, or scenario.
+
+3. NO GENERIC QUESTIONS: Do not use textbook filler questions like "Tell me about yourself", "What are your strengths?", or "Where do you see yourself in 5 years?". Every question must be specific to either the candidate's listed skills OR the specific "{role_title}" role.
+
+4. CONCEPT DIVERSITY: Spread the 5 questions across 5 clearly different concepts. Do not ask 2 questions about the same technology or skill.
 
 Interview Type specific instructions:
-- Behavioural: Focus on soft skills, past experiences, teamwork, conflict resolution, and leadership.
-- Technical: Focus on programming concepts, system design, problem-solving, and general computer science related to the role.
-- Domain-specific: Focus specifically on the tools, frameworks, and technologies related to "{role_title}".
+- Behavioural: Focus on soft skills, past experiences, teamwork, conflict resolution, and leadership. Keep the question scoped so the answer is short (2-4 sentences).
+- Technical: Focus on programming concepts, system design, problem-solving, and CS fundamentals. Prefer "what/why/how" questions over open-ended "describe" questions.
+- Domain-specific: Focus on tools, frameworks, and technologies listed in the skills relevant to "{role_title}". Ask about trade-offs, best practices, or specific use-cases.
 
 Return the questions as a JSON object with a single key "questions" containing a list of strings.
 
