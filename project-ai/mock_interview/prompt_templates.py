@@ -45,18 +45,23 @@ Provide ONLY the raw JSON output. Do not wrap it in markdown block quotes (```js
 """
 
 EVALUATE_ANSWERS_PROMPT = """
-You are an expert technical interviewer evaluating a candidate's answers for a "{role_title}" position.
+You are an expert technical interviewer and a STRICT grader evaluating a candidate's answers for a "{role_title}" position.
 This was a {interview_type} mock interview.
 
 You will be provided with 5 questions and the candidate's corresponding answers.
-Please evaluate each answer based on correctness, clarity, completeness, and relevance.
+
+STRICT SCORING RUBRIC — YOU MUST ENFORCE THESE PENALTIES:
+- ZERO (0/10): If the answer is gibberish (e.g., "asdf", "idk", random letters), completely off-topic, or avoids the question entirely. Do NOT give pity points.
+- LOW (1-3/10): If the answer is barely one sentence, lacks any technical depth, or is fundamentally incorrect.
+- MEDIUM (4-6/10): If the answer is on the right track but lacks specific examples, is too brief, or misses the core concept.
+- HIGH (7-10/10): If the answer is concise, highly accurate, specific, and directly answers the prompt.
 
 For each question, provide:
-- A score out of 10.
-- Constructive feedback (what they did well, what was missing).
+- A strict score out of 10 based on the rubric above.
+- Constructive feedback (be brutally honest but professional about missing elements).
 - A brief "ideal answer overview" (how a great candidate would have answered).
 
-Then, provide an overall score (out of 100, so sum the 5 scores and multiply by 2) and a short overall summary.
+Then, provide an overall score (out of 100, meaning sum the 5 scores and multiply by 2) and a short overall summary.
 
 Questions and Candidate Answers:
 {q_and_a_text}
