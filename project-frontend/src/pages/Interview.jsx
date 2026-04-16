@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useResume } from '../context/ResumeContext';
 import { useApi } from '../hooks/useApi';
@@ -16,6 +16,18 @@ export function Interview() {
   const [currentAnswer, setCurrentAnswer] = useState('');
   const [answersList, setAnswersList] = useState([]);
   const [isEvaluating, setIsEvaluating] = useState(false);
+
+  // Timer and Anti-cheat states
+  const [timeLeft, setTimeLeft] = useState(120);
+  const [strikes, setStrikes] = useState(0);
+  const [showWarning, setShowWarning] = useState(false);
+  
+  // Refs to read latest state inside setInterval
+  const answerRef = useRef('');
+  const answersListRef = useRef([]);
+
+  useEffect(() => { answerRef.current = currentAnswer; }, [currentAnswer]);
+  useEffect(() => { answersListRef.current = answersList; }, [answersList]);
 
   // Fallback if not loaded properly
   if (!interviewQuestions || interviewQuestions.length === 0) {
@@ -38,26 +50,79 @@ export function Interview() {
   
   const currentDomain = getDomainLabel(currentIndex);
 
-  const handleNext = async () => {
-    if (currentAnswer.trim().length === 0) {
+  const handleNext = async (isTimeout = false) => {
+    // If timeout, force submission even if empty
+    const finalAnswer = (isTimeout === true) && answerRef.current.trim().length === 0 
+      ? "[Time expired - no answer provided]" 
+      : answerRef.current;
+
+    if (isTimeout !== true && finalAnswer.trim().length === 0) {
       setError("Please provide an answer before continuing.");
       return;
     }
     setError(null);
 
     const updatedList = [
-      ...answersList, 
-      { question: interviewQuestions[currentIndex], answer: currentAnswer }
+      ...answersListRef.current, 
+      { question: interviewQuestions[currentIndex], answer: finalAnswer }
     ];
     setAnswersList(updatedList);
     setCurrentAnswer('');
+    setTimeLeft(120); // Reset timer for next question
 
     if (currentIndex === totalQuestions - 1) {
-      // Submit Interview
       submitInterview(updatedList);
     } else {
       setCurrentIndex(prev => prev + 1);
     }
+  };
+
+  // --- ANTI-CHEAT & TIMER EFFECTS ---
+  
+  // 1. Countdown Timer
+  useEffect(() => {
+    if (isEvaluating || showWarning) return; // Pause timer if evaluating or warning exists
+    
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          handleNext(true); // Force next question due to timeout
+          return 120;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [currentIndex, isEvaluating, showWarning]);
+
+  // 2. Tab Switching Listener
+  useEffect(() => {
+    if (isEvaluating) return;
+    
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setStrikes(prev => {
+          const newStrikes = prev + 1;
+          if (newStrikes >= 3) {
+            // Terminate session
+            navigate('/');
+          } else {
+            setShowWarning(true);
+          }
+          return newStrikes;
+        });
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isEvaluating, navigate]);
+
+  const formatTime = (seconds) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   const submitInterview = async (fullList) => {
@@ -92,6 +157,27 @@ export function Interview() {
   return (
     <div className="w-full max-w-4xl mx-auto p-4 md:py-8 flex flex-col h-full animate-in fade-in">
       
+      {/* Anti-Cheat Warning Modal */}
+      {showWarning && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1a1a2e] rounded-brand p-6 max-w-sm w-full text-center shadow-xl border border-brand-error/20">
+            <div className="mx-auto w-12 h-12 bg-brand-errorBg text-brand-error rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-brand-dark dark:text-gray-100 mb-2">Warning: Tab Switching</h3>
+            <p className="text-sm text-brand-mid dark:text-gray-400 mb-6">
+              You left the interview window. This is a strict environment. You have {3 - strikes} strike(s) left before the interview is terminated.
+            </p>
+            <button 
+              onClick={() => setShowWarning(false)}
+              className="w-full py-2 bg-brand-primary text-white rounded-brand font-medium hover:bg-brand-dark transition-colors border-none cursor-pointer"
+            >
+              I understand
+            </button>
+          </div>
+        </div>
+      )}
+
       {error && (
         <div className="mb-4 p-4 bg-brand-errorBg border border-brand-error/20 rounded-brand flex gap-3 text-brand-error items-start">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -110,6 +196,14 @@ export function Interview() {
           </div>
           
           <div className="flex items-center gap-1.5 flex-wrap">
+            <div className={clsx(
+              "mr-2 text-xs sm:text-sm font-bold flex items-center gap-1.5 px-3 py-1 rounded-full border transition-colors",
+              timeLeft <= 30 
+                ? "bg-brand-errorBg text-brand-error border-brand-error/30 animate-pulse" 
+                : "bg-brand-light dark:bg-white/5 text-brand-primary border-brand-primary/20"
+            )}>
+              ⏳ {formatTime(timeLeft)}
+            </div>
             {Array.from({ length: totalQuestions }).map((_, i) => {
               if (i < currentIndex) {
                 return <CheckCircle2 key={i} className="w-4 h-4 text-brand-primary" />;
