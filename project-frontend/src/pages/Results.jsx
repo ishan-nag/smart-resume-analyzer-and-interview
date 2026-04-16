@@ -99,7 +99,11 @@ export function Results() {
     if (!evaluationResults) return <div className="p-8 text-center text-brand-mid dark:text-gray-400">No interview data available.</div>;
     
     const evals = evaluationResults.allEvaluationsList || [];
-    if (evals.length === 0) return <div className="p-8 text-center text-brand-mid dark:text-gray-400">No specific question feedback available.</div>;
+    if (evals.length === 0) return (
+      <div className="p-8 text-center">
+        <p className="text-sm italic text-brand-mid dark:text-gray-500">⚠️ No question feedback available.</p>
+      </div>
+    );
 
     return (
       <div className="space-y-4 animate-in fade-in">
@@ -154,21 +158,35 @@ function EvaluationRow({ data }) {
   const scorePct = (data.score_out_of_10 / 10) * 100;
   
   let scoreColor = 'bg-brand-errorBg text-brand-error border-brand-error/20';
-  if (data.score_out_of_10 >= 8) scoreColor = 'bg-brand-successBg text-brand-success border-brand-success/20';
-  else if (data.score_out_of_10 >= 5) scoreColor = 'bg-brand-warningBg text-brand-warning border-brand-warning/20';
+  let scoreIcon = '❌';
+  let scoreLabel = 'Weak Answer';
+  if (data.score_out_of_10 >= 8) {
+    scoreColor = 'bg-brand-successBg text-brand-success border-brand-success/20';
+    scoreIcon = '✅';
+    scoreLabel = 'Strong Answer';
+  } else if (data.score_out_of_10 >= 5) {
+    scoreColor = 'bg-brand-warningBg text-brand-warning border-brand-warning/20';
+    scoreIcon = '⚠️';
+    scoreLabel = 'Needs Work';
+  }
 
   return (
     <div className="bg-white dark:bg-[#1a1a2e] border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 rounded-brand shadow-sm overflow-hidden transition-all duration-300">
       <div 
-        className="p-5 flex items-start gap-4 cursor-pointer hover:bg-brand-light/20"
+        className="p-5 flex items-start gap-4 cursor-pointer hover:bg-brand-light/20 dark:hover:bg-white/5"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className={clsx("px-2 py-1 rounded text-xs font-bold border", scoreColor, "shrink-0 mt-0.5")}>
-          {data.score_out_of_10}/10
+        <div className="flex flex-col items-center gap-1 shrink-0">
+          <div className={clsx("px-2 py-1 rounded text-xs font-bold border", scoreColor)}>
+            {data.score_out_of_10}/10
+          </div>
+          <span className="text-[10px] text-center leading-tight text-brand-mid dark:text-gray-500 max-w-[52px]">{scoreLabel}</span>
         </div>
         <div className="flex-1 pr-4">
-          <p className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-1">Q{data.question_number}: {data.question}</p>
-          <p className="text-xs text-brand-mid dark:text-gray-400 line-clamp-2">{data.feedback}</p>
+          <p className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-1">
+            <span className="mr-1">{scoreIcon}</span>Q{data.question_number}: {data.question}
+          </p>
+          <p className="text-xs text-brand-mid dark:text-gray-400 line-clamp-2 italic">{data.feedback}</p>
         </div>
         <div className="shrink-0 text-brand-mid dark:text-gray-400 mt-1">
           {expanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}

@@ -142,8 +142,15 @@ export function Dashboard() {
           <div className="m-5 mt-auto p-4 bg-brand-light/50 dark:bg-brand-primary/10 border border-brand-primary/20 dark:border-brand-primary/30 rounded-2xl flex gap-3">
               <Lightbulb className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-1">Global Upgrade Tip</h4>
-                <p className="text-sm text-brand-dark dark:text-gray-100 leading-relaxed">{upgradeTip}</p>
+                <h4 className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-2">Global Upgrade Tip</h4>
+                <ul className="space-y-1.5">
+                  {upgradeTip.split(/\.\s+/).filter(s => s.trim().length > 5).map((sentence, i) => (
+                    <li key={i} className="flex gap-2 text-sm text-brand-dark dark:text-gray-100 leading-relaxed">
+                      <span className="text-brand-primary shrink-0 mt-0.5">•</span>
+                      <span>{sentence.replace(/\.$/, '')}.</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
           )}

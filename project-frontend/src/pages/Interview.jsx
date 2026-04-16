@@ -20,8 +20,8 @@ export function Interview() {
   // Fallback if not loaded properly
   if (!interviewQuestions || interviewQuestions.length === 0) {
     return (
-      <div className="p-8 text-center text-brand-mid dark:text-gray-400">
-        <p>No interview questions found. Please restart the session.</p>
+      <div className="p-8 text-center">
+        <p className="text-sm italic text-brand-mid dark:text-gray-500">⚠️ No questions loaded. Please restart the session.</p>
       </div>
     );
   }
@@ -146,15 +146,19 @@ export function Interview() {
       </div>
 
       {/* Answer Area */}
-      <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-[#1a1a2e] rounded-brand border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 shadow-sm p-2">
+      <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-[#1a1a2e] rounded-brand border border-[0.5px] border-brand-mid/30 dark:border-brand-mid/10 shadow-sm p-2 focus-within:border-brand-primary/60 focus-within:ring-2 focus-within:ring-brand-primary/20 transition-all duration-200">
         <textarea
           value={currentAnswer}
           onChange={(e) => setCurrentAnswer(e.target.value)}
-          placeholder="Type your answer here..."
-          className="w-full h-full min-h-[200px] resize-none outline-none p-4 text-brand-dark dark:text-gray-100 rounded-md bg-transparent"
+          placeholder="Give a concise 2–3 sentence answer. Focus on the key point, not a full essay."
+          className="w-full h-full min-h-[200px] resize-none outline-none p-4 text-brand-dark dark:text-gray-100 rounded-md bg-transparent placeholder:text-brand-mid/60 dark:placeholder:text-gray-500 placeholder:italic"
         />
-        <div className="flex items-center justify-between p-4 bg-gray-50/50 border-t border-[0.5px] border-brand-mid/20 mt-auto rounded-b-brand">
-          <p className="text-xs text-brand-mid dark:text-gray-400">Min 2–3 sentences recommended</p>
+        <div className="flex items-center justify-between p-4 bg-gray-50/50 dark:bg-white/5 border-t border-[0.5px] border-brand-mid/20 mt-auto rounded-b-brand">
+          <p className="text-xs text-brand-mid dark:text-gray-400">
+            {currentAnswer.trim().length === 0
+              ? 'Min 2–3 sentences recommended'
+              : `${currentAnswer.trim().split(/\s+/).length} words`}
+          </p>
           <button
             onClick={handleNext}
             className="px-6 py-2.5 bg-brand-primary text-white text-sm font-medium rounded-brand hover:bg-brand-dark transition-colors shadow-sm"
