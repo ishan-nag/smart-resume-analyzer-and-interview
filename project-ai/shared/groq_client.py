@@ -108,7 +108,7 @@ DEFAULT_MODEL = "llama-3.3-70b-versatile"
 MODEL_CONFIGS = {
     "question_generator": {
         "model":       DEFAULT_MODEL,
-        "temperature": 0.7,     # Higher creativity for varied questions
+        "temperature": 0.95,    # Significantly higher creativity to mathematically force unique questions across different interview sessions
         "max_tokens":  1024,
     },
     "answer_evaluator": {

@@ -3,6 +3,7 @@ generator.py — Mock Interview Question Generator
 """
 
 import json
+import uuid
 from shared.groq_client import get_groq_client, MODEL_CONFIGS
 from shared.retry_handler import call_with_retry, parse_json_response
 from job_roles.job_roles import get_role_by_id
@@ -46,6 +47,12 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
         skills=skills,
         experience=experience[:1500]  # truncate to save context limit just in case
     )
+    
+    # 3.5 Inject Mathematics Randomness to break LLM Determinism
+    # Even at high temperatures, LLMs repeat if inputs are identical. This forces uniqueness.
+    random_hash = str(uuid.uuid4())
+    prompt += f"\n\n[SYSTEM ENFORCEMENT - RANDOM SEED: {random_hash}]\n"
+    prompt += "Do NOT give predictable or standard questions. Pick obscure, highly specific, or creative angles based on the candidate's exact experience to ensure this test is wildly different from average."
     
     # 4. Call LLM
     client = get_groq_client()
