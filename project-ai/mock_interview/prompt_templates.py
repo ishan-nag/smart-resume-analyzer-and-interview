@@ -52,9 +52,12 @@ You will be provided with 5 questions and the candidate's corresponding answers.
 
 STRICT SCORING RUBRIC — YOU MUST ENFORCE THESE PENALTIES:
 - ZERO (0/10): If the answer is gibberish (e.g., "asdf", "idk", random letters), completely off-topic, or avoids the question entirely. Do NOT give pity points.
+- ZERO (0/10): If the answer contains the tag [INVALID ANSWER — NO MEANINGFUL RESPONSE PROVIDED], you MUST assign exactly 0/10 and write feedback as: "No meaningful answer was provided."
 - LOW (1-3/10): If the answer is barely one sentence, lacks any technical depth, or is fundamentally incorrect.
 - MEDIUM (4-6/10): If the answer is on the right track but lacks specific examples, is too brief, or misses the core concept.
 - HIGH (7-10/10): If the answer is concise, highly accurate, specific, and directly answers the prompt.
+
+IMPORTANT: You are NOT allowed to be lenient or give sympathy marks. If the candidate does not answer properly, the score is 0. No exceptions.
 
 For each question, provide:
 - A strict score out of 10 based on the rubric above.
