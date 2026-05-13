@@ -480,7 +480,7 @@ project-ai/
 ├── resume_analyzer/   → Full analysis + upgrade tip (primary module)
 ├── mock_interview/    → Question generation + answer evaluation
 ├── shared/            → Groq client, retry handler, validators
-├── data/              → Sample PDFs + job_roles.json + skills_list.json
+├── data/              → Sample PDFs + job_roles.json
 └── output/            → Auto-generated JSON outputs (gitignored)
 ```
 
@@ -912,7 +912,6 @@ project-ai/
 │   ├── sample_resume_3.pdf
 │   ├── sample_resume_4.pdf
 │   ├── sample_resume_5.pdf
-│   ├── skills_list.json
 │   └── job_roles.json
 ├── job_roles/
 │   ├── __init__.py
