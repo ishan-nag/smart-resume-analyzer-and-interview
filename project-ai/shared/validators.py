@@ -51,7 +51,7 @@ def validate_role_selection(role_ids: list) -> dict:
 
 def validate_interview_types(interview_types: list) -> dict:
     """
-    Validates the list of interview types selected by the candidate.
+    Validates the list of interview types automatically requested by the frontend.
 
     Rules:
         - Must be a non-empty list
