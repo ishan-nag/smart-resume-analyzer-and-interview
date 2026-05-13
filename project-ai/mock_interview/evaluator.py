@@ -53,7 +53,7 @@ _JUNK_IDEAL   = "Answer the question directly and concisely in 2-4 sentences usi
 
 def evaluate_interview_answers(role_id: str, interview_type: str, questions_and_answers: list) -> dict:
     """
-    Evaluates 5 candidate answers to generated mock interview questions.
+    Evaluates candidate answers to generated mock interview questions.
     
     Parameters:
         role_id: The ID of the role (e.g. "ml_engineer").
