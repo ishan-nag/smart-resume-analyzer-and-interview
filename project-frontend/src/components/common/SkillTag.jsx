@@ -1,21 +1,32 @@
-import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+export function SkillTag({ label, type = 'matched', className = '' }) {
+  const styles = {
+    matched: {
+      background: 'rgba(52,211,153,0.12)',
+      color: '#059669',
+      border: '1px solid rgba(52,211,153,0.3)',
+    },
+    missing: {
+      background: 'rgba(248,113,113,0.12)',
+      color: '#DC2626',
+      border: '1px solid rgba(248,113,113,0.3)',
+    },
+    'nice-to-have': {
+      background: 'rgba(251,191,36,0.12)',
+      color: '#D97706',
+      border: '1px solid rgba(251,191,36,0.3)',
+    },
+  };
 
-export function SkillTag({ label, type = 'matched', className }) {
-  // matched / missing / nice-to-have
-  let colorClass = 'bg-brand-successBg dark:bg-green-500/10 text-brand-success dark:text-green-400 border-brand-success/20 dark:border-green-500/20';
-  if (type === 'missing') {
-    colorClass = 'bg-brand-errorBg dark:bg-red-500/10 text-brand-error dark:text-red-400 border-brand-error/20 dark:border-red-500/20';
-  } else if (type === 'nice-to-have') {
-    colorClass = 'bg-brand-warningBg dark:bg-amber-500/10 text-brand-warning dark:text-amber-400 border-brand-warning/20 dark:border-amber-500/20';
-  }
+  const style = styles[type] || styles.matched;
 
   return (
-    <span className={twMerge(clsx(
-      'px-3 py-1 rounded-full text-sm font-medium border border-[0.5px]',
-      colorClass,
-      className
-    ))}>
+    <span
+      className={`px-3 py-1 rounded-full text-[12px] font-semibold ${className}`}
+      style={style}
+    >
+      {type === 'matched'       && '✓ '}
+      {type === 'missing'       && '✗ '}
+      {type === 'nice-to-have'  && '~ '}
       {label}
     </span>
   );

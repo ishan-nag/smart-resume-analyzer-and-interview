@@ -5,99 +5,95 @@ import { SkillTag } from '../components/common/SkillTag';
 import { SectionFeedbackRow } from '../components/common/SectionFeedbackRow';
 import { Trophy, Users, FileBarChart, Lightbulb, Target } from 'lucide-react';
 
+/* Stat card accents */
+const statCards = [
+  { key: 'best',      icon: Trophy,        iconBg: 'linear-gradient(135deg,#34D399,#059669)', label: 'Best Match Score' },
+  { key: 'roles',     icon: Users,         iconBg: 'linear-gradient(135deg,#818CF8,#534AB7)', label: 'Roles Compared'  },
+  { key: 'quality',   icon: FileBarChart,  iconBg: 'linear-gradient(135deg,#60A5FA,#2563EB)', label: 'Resume Quality'  },
+  { key: 'interview', icon: Target,        iconBg: 'linear-gradient(135deg,#F472B6,#DB2777)', label: 'Interview Score' },
+];
+
 export function Dashboard() {
   const { analysisResults, upgradeTip, evaluationResults } = useResume();
 
   if (!analysisResults || analysisResults.length === 0) {
     return (
-      <div className="p-8 text-center text-brand-mid dark:text-gray-400">
+      <div className="p-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
         <p>No analysis data available. Please upload a resume first.</p>
       </div>
     );
   }
 
-  // Calculate stats
-  const bestMatch = [...analysisResults].sort((a, b) => (b.ats?.overall_score || 0) - (a.ats?.overall_score || 0))[0];
-  const rolesCount = analysisResults.length;
-  const qualityScore = bestMatch?.quality_score?.overall || 0;
-  const interviewScore = evaluationResults?.evaluation?.overall_score;
+  const bestMatch     = [...analysisResults].sort((a, b) => (b.ats?.overall_score || 0) - (a.ats?.overall_score || 0))[0];
+  const rolesCount    = analysisResults.length;
+  const qualityScore  = bestMatch?.quality_score?.overall || 0;
+  const interviewScore= evaluationResults?.evaluation?.overall_score;
+  const skillsGap     = bestMatch?.skills_gap || { matched: [], missing: [], nice_to_have_missing: [] };
+  const sections      = bestMatch?.section_feedback || {};
 
-  const skillsGap = bestMatch?.skills_gap || { matched: [], missing: [], nice_to_have_missing: [] };
-  const sections = bestMatch?.section_feedback || {};
+  const statValues = [
+    { value: `${bestMatch?.ats?.overall_score || 0}%`, sub: bestMatch?.role?.title },
+    { value: rolesCount,                                sub: 'roles analyzed'       },
+    { value: `${qualityScore}/100`,                     sub: 'quality score'        },
+    { value: interviewScore !== undefined ? `${interviewScore}/100` : '—', sub: 'mock interview' },
+  ];
 
   return (
-    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
-      
-      {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-card p-5 rounded-2xl flex items-center gap-4">
-          <div className="bg-brand-successBg dark:bg-green-500/10 text-brand-success dark:text-green-400 p-3 rounded-full shrink-0">
-            <Trophy className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-brand-mid dark:text-gray-400 uppercase tracking-wide">Best Match Score</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-brand-dark dark:text-gray-100">{bestMatch?.ats?.overall_score || 0}%</span>
-            </div>
-            <p className="text-xs text-brand-dark dark:text-gray-100 truncate">{bestMatch?.role?.title}</p>
-          </div>
-        </div>
+    <div className="p-4 md:p-8 space-y-6 max-w-7xl mx-auto animate-float-up">
 
-        <div className="glass-card p-5 rounded-2xl flex items-center gap-4">
-          <div className="bg-brand-light dark:bg-brand-primary/20 text-brand-primary dark:text-indigo-400 p-3 rounded-full shrink-0">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-brand-mid dark:text-gray-400 uppercase tracking-wide">Roles Compared</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-brand-dark dark:text-gray-100">{rolesCount}</span>
+      {/* ── Stat Cards ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map((card, i) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.key} className="glass-card p-5 rounded-2xl flex items-center gap-4 group hover:scale-[1.02] transition-transform">
+              <div className="p-3 rounded-xl shrink-0 shadow-md"
+                   style={{ background: card.iconBg }}>
+                <Icon className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-widest mb-1"
+                   style={{ color: 'var(--text-muted)' }}>
+                  {card.label}
+                </p>
+                <p className="text-[20px] font-black leading-none"
+                   style={{ color: 'var(--text-primary)' }}>
+                  {statValues[i].value}
+                </p>
+                {statValues[i].sub && (
+                  <p className="text-[11px] mt-1 truncate font-medium"
+                     style={{ color: 'var(--accent, #818CF8)' }}>
+                    {statValues[i].sub}
+                  </p>
+                )}
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div className="glass-card p-5 rounded-2xl flex items-center gap-4">
-          <div className="bg-brand-light dark:bg-brand-primary/20 text-brand-primary dark:text-indigo-400 p-3 rounded-full shrink-0">
-            <FileBarChart className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-brand-mid dark:text-gray-400 uppercase tracking-wide">Resume Quality</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-brand-dark dark:text-gray-100">{qualityScore}/100</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="glass-card p-5 rounded-2xl flex items-center gap-4">
-          <div className="bg-brand-warningBg dark:bg-amber-500/10 text-brand-warning dark:text-amber-400 p-3 rounded-full shrink-0">
-            <Target className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-medium text-brand-mid dark:text-gray-400 uppercase tracking-wide">Interview Score</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-2xl font-bold text-brand-dark dark:text-gray-100">
-                {interviewScore !== undefined ? `${interviewScore}/100` : '—'}
-              </span>
-            </div>
-          </div>
-        </div>
+          );
+        })}
       </div>
 
-      {/* Middle Grid */}
+      {/* ── Middle Grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Left: Role Comparisons & Skills */}
+
+        {/* Role Comparisons + Skills */}
         <div className="glass-card rounded-2xl overflow-hidden flex flex-col">
-          <div className="p-5 border-b border-[0.5px] border-brand-mid/30">
-            <h3 className="text-base font-medium text-brand-dark dark:text-gray-100">Role Comparisons</h3>
-            <p className="text-xs text-brand-mid dark:text-gray-400 mt-1">ATS matching scores for your selected roles</p>
+          <div className="p-5 border-b" style={{ borderColor: 'var(--card-border)' }}>
+            <h3 className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>Role Comparisons</h3>
+            <p className="text-[12px] mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>
+              ATS matching scores for your selected roles
+            </p>
           </div>
           <div className="p-5 space-y-5">
             {analysisResults.map((res, i) => (
               <div key={i} className="space-y-2">
                 <div className="flex justify-between items-end">
                   <div className="truncate pr-4">
-                    <div className="text-sm font-medium text-brand-dark dark:text-gray-100 truncate">{res.role?.title}</div>
-                    <div className="text-xs text-brand-mid dark:text-gray-400">{res.ats?.recommendation}</div>
+                    <div className="text-[13.5px] font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                      {res.role?.title}
+                    </div>
+                    <div className="text-[11.5px] mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>
+                      {res.ats?.recommendation}
+                    </div>
                   </div>
                   <ScoreBadge score={res.ats?.overall_score || 0} />
                 </div>
@@ -106,65 +102,66 @@ export function Dashboard() {
             ))}
           </div>
 
-          <div className="p-5 border-t border-[0.5px] border-white/20 dark:border-slate-700/50 bg-brand-light/30 dark:bg-slate-800/50 flex-1">
-            <h3 className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-3">Skills Gap Analysis (Best Match)</h3>
-            <div className="flex flex-wrap gap-2 mb-4">
+          {/* Skills Gap */}
+          <div className="p-5 border-t flex-1" style={{ background: 'var(--hover-bg)', borderColor: 'var(--card-border)' }}>
+            <h3 className="text-[13.5px] font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+              Skills Gap Analysis <span className="font-medium text-[12px]" style={{ color: 'var(--text-muted)' }}>(Best Match)</span>
+            </h3>
+            <div className="flex flex-wrap gap-2">
               {skillsGap.matched?.map((s, i) => <SkillTag key={`m-${i}`} label={s} type="matched" />)}
               {skillsGap.missing?.map((s, i) => <SkillTag key={`miss-${i}`} label={s} type="missing" />)}
               {skillsGap.nice_to_have_missing?.map((s, i) => <SkillTag key={`nth-${i}`} label={s} type="nice-to-have" />)}
-              
               {skillsGap.matched?.length === 0 && skillsGap.missing?.length === 0 && (
-                <span className="text-sm text-brand-mid dark:text-gray-400">No skills data available.</span>
+                <span className="text-sm" style={{ color: 'var(--text-muted)' }}>No skills data available.</span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Right: Quality & Upgrade Tip */}
+        {/* Quality Breakdown */}
         <div className="glass-card rounded-2xl flex flex-col">
-          <div className="p-5 border-b border-[0.5px] border-brand-mid/30">
-            <h3 className="text-base font-medium text-brand-dark dark:text-gray-100">Quality Breakdown</h3>
-            <p className="text-xs text-brand-mid dark:text-gray-400 mt-1">How well your resume is written</p>
+          <div className="p-5 border-b" style={{ borderColor: 'var(--card-border)' }}>
+            <h3 className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>Quality Breakdown</h3>
+            <p className="text-[12px] mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>How well your resume is written</p>
           </div>
           <div className="p-5 space-y-5">
             {Object.entries(bestMatch?.quality_score?.breakdown || {}).map(([key, val]) => (
-              <div key={key} className="space-y-2">
+              <div key={key} className="space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <div className="text-sm font-medium text-brand-dark dark:text-gray-100 capitalize">{key}</div>
-                  <div className="text-sm text-brand-mid dark:text-gray-400">{val}/100</div>
+                  <div className="text-[13px] font-semibold capitalize" style={{ color: 'var(--text-primary)' }}>{key}</div>
+                  <div className="text-[13px] font-bold" style={{ color: 'var(--text-muted)' }}>{val}/100</div>
                 </div>
-                <ProgressBar value={val} color="bg-brand-mid" />
+                <ProgressBar value={val} />
               </div>
             ))}
           </div>
-          
+
+          {/* Upgrade Tip */}
           {upgradeTip && (
-          <div className="m-5 mt-auto p-4 bg-brand-light/50 dark:bg-brand-primary/10 border border-brand-primary/20 dark:border-brand-primary/30 rounded-2xl flex gap-3">
-              <Lightbulb className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
+            <div className="m-5 mt-auto p-4 rounded-2xl flex gap-3"
+                 style={{ background: 'linear-gradient(135deg, rgba(83,74,183,0.12), rgba(124,58,237,0.06))',
+                          border: '1px solid rgba(83,74,183,0.2)' }}>
+              <Lightbulb className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#818CF8' }} />
               <div>
-                <h4 className="text-sm font-medium text-brand-dark dark:text-gray-100 mb-2">Global Upgrade Tip</h4>
-                <ul className="space-y-1.5">
-                  {upgradeTip.split(/\.\s+/).filter(s => s.trim().length > 5).map((sentence, i) => (
-                    <li key={i} className="flex gap-2 text-sm text-brand-dark dark:text-gray-100 leading-relaxed">
-                      <span className="text-brand-primary shrink-0 mt-0.5">•</span>
-                      <span>{sentence.replace(/\.$/, '')}.</span>
-                    </li>
-                  ))}
-                </ul>
+                <h4 className="text-[13px] font-bold mb-1" style={{ color: '#818CF8' }}>💡 Global Upgrade Tip</h4>
+                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{upgradeTip}</p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Bottom: Section Feedback */}
-      <div className="glass-card rounded-2xl w-full">
-        <div className="p-5 border-b border-[0.5px] border-brand-mid/30">
-          <h3 className="text-base font-medium text-brand-dark dark:text-gray-100">Section-by-Section Feedback</h3>
+      {/* ── Section Feedback ── */}
+      <div className="glass-card rounded-2xl w-full overflow-hidden">
+        <div className="p-5 border-b" style={{ borderColor: 'var(--card-border)' }}>
+          <h3 className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>Section-by-Section Feedback</h3>
+          <p className="text-[12px] mt-0.5 font-medium" style={{ color: 'var(--text-muted)' }}>
+            Detailed review of each resume section
+          </p>
         </div>
-        <div className="flex flex-col">
+        <div className="flex flex-col divide-y" style={{ '--tw-divide-opacity': 1 }}>
           {Object.entries(sections).map(([key, data]) => (
-            <SectionFeedbackRow 
+            <SectionFeedbackRow
               key={key}
               title={key.charAt(0).toUpperCase() + key.slice(1)}
               feedback={data.feedback}
@@ -173,7 +170,9 @@ export function Dashboard() {
             />
           ))}
           {Object.keys(sections).length === 0 && (
-            <div className="p-5 text-center text-brand-mid dark:text-gray-400 text-sm">No section feedback available.</div>
+            <div className="p-5 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
+              No section feedback available.
+            </div>
           )}
         </div>
       </div>
