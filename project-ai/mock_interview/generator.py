@@ -30,6 +30,10 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
         return {"status": "error", "error": f"Role '{role_id}' not found."}
     
     role_title = role.get("title", role_id)
+    role_description = role.get("description", "Not provided")
+    role_required_skills = ", ".join(role.get("required_skills", []))
+    if not role_required_skills:
+        role_required_skills = "Not specified"
     
     # 2. Extract Candidate Info
     skills = ", ".join(parsed_resume.get("skills", []))
@@ -44,6 +48,8 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
     prompt = GENERATE_QUESTIONS_PROMPT.format(
         interview_type=interview_type,
         role_title=role_title,
+        role_description=role_description[:1000],
+        role_required_skills=role_required_skills,
         skills=skills,
         experience=experience[:1500]  # truncate to save context limit just in case
     )
@@ -52,7 +58,7 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
     # Even at high temperatures, LLMs repeat if inputs are identical. This forces uniqueness.
     random_hash = str(uuid.uuid4())
     prompt += f"\n\n[SYSTEM ENFORCEMENT - RANDOM SEED: {random_hash}]\n"
-    prompt += "Do NOT give predictable or standard questions. Pick obscure, highly specific, or creative angles based on the candidate's exact experience to ensure this test is wildly different from average."
+    prompt += "Do NOT give predictable or standard questions. Pick obscure, highly specific, or creative angles based on the ROLE REQUIREMENTS to ensure this test is wildly different from average."
     
     # 4. Call LLM
     client = get_groq_client()

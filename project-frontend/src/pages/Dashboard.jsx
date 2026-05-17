@@ -143,8 +143,15 @@ export function Dashboard() {
                           border: '1px solid rgba(83,74,183,0.2)' }}>
               <Lightbulb className="w-5 h-5 shrink-0 mt-0.5" style={{ color: '#818CF8' }} />
               <div>
-                <h4 className="text-[13px] font-bold mb-1" style={{ color: '#818CF8' }}>💡 Global Upgrade Tip</h4>
-                <p className="text-[13px] leading-relaxed" style={{ color: 'var(--text-primary)' }}>{upgradeTip}</p>
+                <h4 className="text-[13px] font-bold mb-2" style={{ color: '#818CF8' }}>💡 Global Upgrade Tip</h4>
+                <ul className="text-[13px] leading-relaxed space-y-1 list-disc list-outside pl-4" style={{ color: 'var(--text-primary)' }}>
+                  {upgradeTip
+                    .split(/(?<=[.!?])\s+/)
+                    .filter(s => s.trim().length > 0)
+                    .map((sentence, i) => (
+                      <li key={i}>{sentence.trim()}</li>
+                    ))}
+                </ul>
               </div>
             </div>
           )}
