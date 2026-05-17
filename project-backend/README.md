@@ -59,7 +59,7 @@ The backend exposes the following transparent proxy endpoints:
 | **POST** | `/api/upload` | Upload Resume PDF | `multipart/form-data` |
 | **GET** | `/api/roles` | Fetch available 34 Job Roles | None |
 | **POST** | `/api/analyze` | Request Resume Analysis | JSON: `{"parsed_resume": {}, "role_ids": []}` |
-| **POST** | `/api/interview/generate` | Fetch 15 Interview Questions | JSON: `{"parsed_resume": {}, "role_id": "", "interview_types": []}` |
+| **POST** | `/api/interview/generate` | Fetch 15 Interview Questions (role-first, 2-5 sentence answer design) | JSON: `{"parsed_resume": {}, "role_id": "", "interview_types": []}` |
 | **POST** | `/api/interview/evaluate` | Evaluate 15 Answers | JSON: `{"role_id": "", "submitted_answers": {}}` |
 
 ---

@@ -105,10 +105,10 @@ The application will be available at **http://localhost:3000** (or similar port 
 ## What the UI Does — The 3 Modes
 
 ### Mode 1 — Resume Analysis Only
-Prompts the user to upload a PDF and pick up to 3 roles. Displays ATS score cards, skills gap, quality score, and comprehensive section feedback. No interview sequence is triggered.
+Prompts the user to upload a PDF and pick up to 3 roles. Displays ATS score cards, skills gap, quality score, comprehensive section feedback, and a global upgrade tip rendered as a scannable bulleted list. No interview sequence is triggered.
 
 ### Mode 2 — Mock Interview Only
-Upload PDF & Select exactly 1 role. Interactively steps the candidate through exactly 15 questions sequentially (one at a time) across 3 domains. Feedback is completely hidden until all answers are submitted. 
+Upload PDF & Select exactly 1 role. Interactively steps the candidate through exactly 15 questions sequentially (one at a time) across 3 domains. Questions are role-first — they test the role's required skills even if the candidate's resume is from a different domain. Each question is designed for a 2-5 sentence answer. Feedback is completely hidden until all answers are submitted. 
 
 ### Mode 3 — Both at Once
 Combines Mode 1 and 2. The resume score is generated immediately, followed by the seamless transition into the 15-question interview flow.
@@ -131,6 +131,9 @@ Combines Mode 1 and 2. The resume score is generated immediately, followed by th
 - **Only PDFs** - We must reject `.docx`, `.png`, or any other format before hitting the backend.
 - **Max 3 Roles** - The UI explicitly disables role checkboxes when 3 are clicked.
 - **Sequential Pacing** - We strictly display one question at a time. The candidate types in a text area, clicks Next, and *then* sees Q2. They cannot see all 15 questions at once.
+- **Role-First Questions** - Interview questions prioritize the selected role's requirements over the candidate's resume skills. An ML-skilled candidate interviewing for a VLSI role gets VLSI questions, not ML questions.
+- **Answer Length** - Questions are designed to elicit 2-5 sentence answers (40-120 words). Not one-liners, not essays.
+- **Bulleted Upgrade Tip** - The global upgrade tip is split by sentence boundaries and rendered as a bulleted list for easy scanning.
 - **Client Cache Optimization** - Once the `parsed_resume` JSON is fetched, it is kept in React Context. Re-running analytics across another role does not require uploading the PDF again.
 - **Dynamic Loading State** - Since AI APIs take ~20 seconds to reply, we cycle loading text (e.g., "Extracting text...", "Matching ATS..."). Do not show a static loading spinner.
 

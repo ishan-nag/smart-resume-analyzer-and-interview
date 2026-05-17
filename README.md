@@ -42,14 +42,14 @@ The product offers three strictly distinct interview and analysis flows.
 
 ### Mode 1 — Resume Analysis Only
 > *"I want to know how my resume scores against specific job roles."*
-- User uploads PDF → Selects up to 3 roles → Gets ATS scores, skills gap analysis, quality scores, section-by-section feedback, and a global upgrade tip.
+- User uploads PDF → Selects up to 3 roles → Gets ATS scores, skills gap analysis, quality scores, section-by-section feedback, and a global upgrade tip (displayed as scannable bullet points).
 - **No interview. Just resume feedback.**
 
 ### Mode 2 — Mock Interview Only
 > *"I want to practice interview questions for a specific role."*
 - User uploads PDF (required to gather background) → Selects 1 role.
-- Interview automatically generates 15 questions across 3 domains (Behavioural, Technical, Domain-specific).
-- Gets questions **one at a time** → Answers each question before the next one appears.
+- Interview automatically generates 15 questions across 3 domains (Behavioural, Technical, Domain-specific). Questions are role-first — they test the role's required skills even if the candidate's resume lacks them.
+- Gets questions **one at a time** → Answers each question before the next one appears. Questions are designed for concise 2-5 sentence answers.
 - Gets full feedback report with scores, feedback per question, and ideal answers only after completion.
 - **No deep resume analysis. Just interview practice.**
 
@@ -153,4 +153,4 @@ Instead, the **Frontend UI** temporarily caches the parsed resume in local brows
 Because of this specific batch-processing design:
 1. **Zero Liability:** No candidate data is permanently stored, keeping the application fully privacy-compliant by default.
 2. **Infinite Scale:** You can deploy 10 load-balanced AI microservices, and it will never matter which server receives a request because no session state is required.
-3. **Low API Cost:** We only query Groq twice per interview (once to generate 15 questions, once to evaluate 15 answers), dramatically preserving free-tier rate limits compared to traditional single-message chatbots.
+3. **Low API Cost:** We only query Groq twice per interview (once to generate 15 questions, once to evaluate 15 answers), dramatically preserving free-tier rate limits compared to traditional single-message chatbots. Questions are role-first — the AI receives the full role description and required skills, ensuring domain-relevant questions even for cross-domain candidates.

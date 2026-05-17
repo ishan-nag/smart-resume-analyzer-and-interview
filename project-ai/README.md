@@ -442,7 +442,7 @@ The FastAPI wrapper standardizes all errors into proper network HTTP status code
 | Quality score bars | `quality_score.breakdown.format`, `.clarity`, `.impact`, `.brevity` |
 | Section feedback | `section_feedback.experience.feedback`, etc. |
 | Improvements bullets | `section_feedback.*.improvements` (array of strings) |
-| Upgrade tip paragraph | `upgrade_tip` (single string) |
+| Upgrade tip | `upgrade_tip` (single string, split into bullets on frontend) |
 | Interview question text | `questions[i]` (string) |
 | Interview score per Q | `evaluation.evaluations[i].score_out_of_10` |
 | Interview feedback per Q | `evaluation.evaluations[i].feedback` |
@@ -491,7 +491,7 @@ project-ai/
 3. **Retry with exponential backoff** — all LLM calls go through `shared/retry_handler.py` (3 retries, 1s → 2s → 4s delay).
 4. **Singleton Groq client** — `shared/groq_client.py` creates the client once and reuses it.
 5. **Model configs** — temperature and max_tokens per module are centralized in `MODEL_CONFIGS` dict in `groq_client.py`.
-6. **Questions are concise** — LLM is prompted to generate questions answerable in 3-4 lines of text.
+6. **Questions are role-first and concise** — LLM receives the role's full description and required skills (not just the title). A "ROLE-FIRST PRINCIPLE" forces questions to test role requirements even if the candidate's resume is from a different domain. The "GOLDILOCKS RULE" ensures questions elicit 2-5 sentence answers — not one-liners, not essays.
 
 ### How to add a new module
 
@@ -568,7 +568,7 @@ result = analyze_resume(parsed_resume, role_id="ml_engineer")
 
 ### 4. `generate_upgrade_tip(all_role_results, parsed_resume)` — Upgrade Tip
 
-Call ONCE after all `analyze_resume()` calls. Returns one actionable paragraph.
+Call ONCE after all `analyze_resume()` calls. Returns one actionable paragraph split into bullet points on the frontend.
 
 ```python
 from resume_analyzer import generate_upgrade_tip
@@ -577,6 +577,7 @@ tip = generate_upgrade_tip(all_results, parsed_resume)
 
 **Output:** `{"upgrade_tip": "Your resume shows strong Python fundamentals..."}`
 **API calls:** 1 total
+**Frontend display:** The tip text is split by sentence boundaries and rendered as a bulleted list for scannability.
 
 ---
 
@@ -595,7 +596,7 @@ result = score_resume(parsed_resume, role_id="ml_engineer")
 
 ### 6. `generate_interview_questions(parsed_resume, role_id, interview_type)` — Question Generator
 
-Generates 5 focused questions. Call once per interview type.
+Generates 5 focused questions. Call once per interview type. Questions are role-first — the LLM receives the role's full description and required skills, and is instructed to prioritize role requirements over the candidate's resume skills.
 
 ```python
 from mock_interview import generate_interview_questions
@@ -605,6 +606,12 @@ result = generate_interview_questions(parsed_resume, "ml_engineer", "behavioural
 **Output:** `{"status": "success", "questions": ["Q1?", "Q2?", "Q3?", "Q4?", "Q5?"]}`
 **On error:** `{"status": "error", "error": "..."}`
 **API calls:** 1 per interview type
+
+**Key design:**
+- Role description and required skills are injected into the prompt (not just the title)
+- "ROLE-FIRST PRINCIPLE" — questions test role requirements first, resume skills second
+- "GOLDILOCKS RULE" — questions designed for 2-5 sentence answers (40-120 words)
+- Avoids overly broad (essay) and overly narrow (one-word) questions
 
 ---
 
@@ -1022,4 +1029,4 @@ Frontend (Vercel) → Backend (Render, Java) → AI Module (Render, Python) → 
 ---
 
 **GitHub:** https://github.com/ishan-nag/smart-resume-analyzer-and-interview
-**Last Updated:** Session 6 — FastAPI Microservice Implementation + Mandatory 15-Question Mock Interview Flow.
+**Last Updated:** Session 7 — Role-First Interview Questions, Goldilocks Answer Length, Bulleted Upgrade Tip Display.
