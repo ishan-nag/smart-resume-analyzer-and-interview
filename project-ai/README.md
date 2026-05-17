@@ -234,7 +234,7 @@ Always run from the `project-ai/` folder, never from inside a subfolder.
 
 # Run modules in this order:
 python -m resume_parser.resume_parser       # Must run first — generates parsed JSON
-python -m job_roles.job_roles               # Test: shows all 28 roles
+python -m job_roles.job_roles               # Test: shows all 34 roles
 python -m ats_scorer.ats_scorer             # Test: scores resume vs roles
 python -m resume_analyzer.resume_analyzer   # Test: full analysis pipeline
 
@@ -277,7 +277,7 @@ From your Java Spring Boot app, use `RestTemplate` or `WebClient` to make HTTP r
 
 #### Endpoint 2: Get Available Roles (`GET /api/roles`)
 - **Input:** None.
-- **Output:** List of 28 roles to display in the frontend dropdown.
+- **Output:** List of 34 roles to display in the frontend dropdown.
 
 #### Endpoint 3: Resume Analysis (`POST /api/analyze`)
 - **Input JSON Request Body:** `{"parsed_resume": {...}, "role_ids": ["ml_engineer", "backend_engineer"]}`
@@ -349,7 +349,7 @@ The FastAPI wrapper standardizes all errors into proper network HTTP status code
 ]
 ```
 
-28 roles across 7 categories: Software Engineering, Data & AI, Infrastructure & Cloud, Mobile, Security, Product & Management, Emerging & Specialist.
+34 roles across 8 categories: Software Engineering, Data & AI, Infrastructure & Cloud, Mobile, Security, Product & Management, Emerging & Specialist, Hardware & ECE.
 
 #### Resume analysis result (per role)
 
@@ -475,7 +475,7 @@ The FastAPI wrapper standardizes all errors into proper network HTTP status code
 ```
 project-ai/
 ├── resume_parser/     → PDF text extraction + LLM structuring
-├── job_roles/         → 28 roles from local JSON (0 API calls)
+├── job_roles/         → 34 roles from local JSON (0 API calls)
 ├── ats_scorer/        → ATS scoring (used internally by analyzer)
 ├── resume_analyzer/   → Full analysis + upgrade tip (primary module)
 ├── mock_interview/    → Question generation + answer evaluation
@@ -539,7 +539,7 @@ result = parse_resume("uploads/resume.pdf")
 
 ### 2. `get_all_roles()` — Job Roles
 
-Returns lightweight list of 28 roles for frontend dropdown. Zero API calls.
+Returns lightweight list of 34 roles for frontend dropdown. Zero API calls.
 
 ```python
 from job_roles import get_all_roles
@@ -693,14 +693,14 @@ validate_parsed_resume(parsed_resume)
 
 ### Why the 3-Role Cap Matters
 
-Without a cap, one user picking all 28 roles would burn 30+ API calls in a single session.
+Without a cap, one user picking all 34 roles would burn 36+ API calls in a single session.
 
 **Before (no cap) — worst case:**
 
 | Mode | Calls/Session | Users/Day |
 |---|---|---|
-| Mode 1 (28 roles) | 30 | ~33 |
-| Mode 3 (28 roles + 3 types) | 36 | ~27 |
+| Mode 1 (34 roles) | 36 | ~27 |
+| Mode 3 (34 roles + 3 types) | 42 | ~23 |
 
 **After (3-role cap) — maximum possible:**
 
@@ -735,7 +735,7 @@ parse_resume(pdf_path)                  ─── 1 LLM call
   │  Returns: parsed_resume dict
   ▼
 get_all_roles()                         ─── 0 LLM calls
-  │  Returns: list of 28 roles
+  │  Returns: list of 34 roles
   ▼
 validate_role_selection(role_ids)       ─── 0 calls (max 3 enforced)
   │
@@ -875,7 +875,7 @@ validate_role_selection + validate_interview_types (can be all 3)
 │                   AI MODULE (Render, Python)                       │
 │                                                                   │
 │  resume_parser    → Extracts structured data from PDF             │
-│  job_roles        → Serves 28 roles from local JSON (0 API calls) │
+│  job_roles        → Serves 34 roles from local JSON (0 API calls) │
 │  ats_scorer       → Scores resume vs role (used by analyzer)      │
 │  resume_analyzer  → Full analysis + upgrade tip generation        │
 │  mock_interview   → Question generation + answer evaluation       │

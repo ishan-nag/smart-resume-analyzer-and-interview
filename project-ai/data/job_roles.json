@@ -397,6 +397,91 @@
             "nice_to_have_skills": [
                 "arkit", "arcore", "webxr", "spatial audio", "shader programming"
             ]
+        },
+
+        {
+            "id": "vlsi_design_engineer",
+            "title": "VLSI Design Engineer",
+            "category": "Hardware & ECE",
+            "experience_level": "Mid-level",
+            "description": "Design and verify integrated circuits and semiconductor chips. Develop RTL code, perform synthesis, and run timing analysis. Collaborate with fabrication teams to bring designs to silicon.",
+            "required_skills": [
+                "verilog", "vhdl", "systemverilog", "digital design", "timing analysis",
+                "synthesis", "static timing analysis", "linux", "git", "logic design"
+            ],
+            "nice_to_have_skills": [
+                "uvm", "physical design", "low power design", "scripting", "perl"
+            ]
+        },
+        {
+            "id": "iot_engineer",
+            "title": "IoT Engineer",
+            "category": "Hardware & ECE",
+            "experience_level": "Mid-level",
+            "description": "Design and develop connected IoT devices and systems. Integrate sensors, microcontrollers, and wireless communication protocols. Build end-to-end IoT solutions from edge to cloud.",
+            "required_skills": [
+                "c", "c++", "embedded systems", "microcontrollers", "mqtt",
+                "wifi", "bluetooth", "zigbee", "pcb design", "git"
+            ],
+            "nice_to_have_skills": [
+                "aws iot", "azure iot", "edge computing", "python", "lora"
+            ]
+        },
+        {
+            "id": "firmware_developer",
+            "title": "Firmware Developer",
+            "category": "Hardware & ECE",
+            "experience_level": "Mid-level",
+            "description": "Write and debug low-level firmware for hardware devices and controllers. Develop device drivers, bootloaders, and hardware abstraction layers. Optimize code for size, speed, and power consumption.",
+            "required_skills": [
+                "c", "assembly", "embedded systems", "rtos", "microcontrollers",
+                "debugging", "hardware schematics", "git", "linux", "communication protocols"
+            ],
+            "nice_to_have_skills": [
+                "c++", "python", "jtag", "oscilloscope", "bootloader development"
+            ]
+        },
+        {
+            "id": "rf_engineer",
+            "title": "RF Engineer",
+            "category": "Hardware & ECE",
+            "experience_level": "Mid-level",
+            "description": "Design and optimize radio frequency circuits, antennas, and wireless communication systems. Perform RF testing, signal integrity analysis, and electromagnetic compatibility assessments.",
+            "required_skills": [
+                "rf design", "antenna design", "signal integrity", "pcb design", "spectrum analyzer",
+                "network analyzer", "microwave engineering", "electromagnetics", "matlab", "ads"
+            ],
+            "nice_to_have_skills": [
+                "5g", "lte", "hfss", "cst studio", "wireless protocols"
+            ]
+        },
+        {
+            "id": "power_electronics_engineer",
+            "title": "Power Electronics Engineer",
+            "category": "Hardware & ECE",
+            "experience_level": "Mid-level",
+            "description": "Design power conversion systems including DC-DC converters, inverters, and motor drives. Develop control algorithms for power management and energy-efficient systems. Perform thermal and electrical simulations.",
+            "required_skills": [
+                "power electronics", "circuit design", "pcb design", "spice simulation", "control systems",
+                "matlab", "simulink", "microcontrollers", "thermal analysis", "git"
+            ],
+            "nice_to_have_skills": [
+                "fpga", "motor control", "battery management systems", "renewable energy", "safety standards"
+            ]
+        },
+        {
+            "id": "fpga_developer",
+            "title": "FPGA Developer",
+            "category": "Hardware & ECE",
+            "experience_level": "Mid-level",
+            "description": "Design, simulate, and implement digital logic on FPGA platforms. Develop RTL code, perform timing closure, and verify hardware designs. Optimize for performance, area, and power.",
+            "required_skills": [
+                "verilog", "vhdl", "fpga", "xilinx vivado", "intel quartus",
+                "digital design", "timing analysis", "simulation", "git", "linux"
+            ],
+            "nice_to_have_skills": [
+                "systemverilog", "high level synthesis", "pcie", "ethernet", "signal processing"
+            ]
         }
     ]
 }
