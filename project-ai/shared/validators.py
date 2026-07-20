@@ -1,39 +1,11 @@
-"""
-validators.py — Input Validation Helpers
-==========================================
-Shared validation functions used by the backend (or FastAPI wrapper)
-to enforce session-level constraints before calling AI functions.
-
-Rules enforced:
-    - Maximum 3 roles per session
-    - Valid interview types only
-    - Parsed resume must exist before interview
-
-This module is stateless — it only validates inputs, it does not
-store any session data.
-"""
+"""Input validation helpers for session-level constraints."""
 
 MAX_ROLES_PER_SESSION = 3
 VALID_INTERVIEW_TYPES = ["behavioural", "technical", "domain-specific"]
 
 
 def validate_role_selection(role_ids: list) -> dict:
-    """
-    Validates the list of role IDs selected by the candidate.
-
-    Rules:
-        - Must be a non-empty list
-        - Maximum 3 roles allowed per session
-        - No duplicate role IDs
-
-    Parameters:
-        role_ids (list): List of role ID strings.
-                         Example: ["ml_engineer", "backend_engineer"]
-
-    Returns:
-        dict: {"valid": True} if all checks pass.
-              {"valid": False, "error": "..."} if validation fails.
-    """
+    """Validates role IDs: non-empty list, max 3, no duplicates. Returns {"valid": True} or error dict."""
     if not role_ids or not isinstance(role_ids, list):
         return {"valid": False, "error": "No roles selected. Please select at least 1 role."}
 
@@ -50,21 +22,7 @@ def validate_role_selection(role_ids: list) -> dict:
 
 
 def validate_interview_types(interview_types: list) -> dict:
-    """
-    Validates the list of interview types automatically requested by the frontend.
-
-    Rules:
-        - Must be a non-empty list
-        - Each type must be one of: "behavioural", "technical", "domain-specific"
-        - No duplicates
-
-    Parameters:
-        interview_types (list): List of interview type strings.
-
-    Returns:
-        dict: {"valid": True} if all checks pass.
-              {"valid": False, "error": "..."} if validation fails.
-    """
+    """Validates interview types: non-empty list, valid types only, no duplicates."""
     if not interview_types or not isinstance(interview_types, list):
         return {"valid": False, "error": "No interview types selected. Choose at least 1."}
 
@@ -82,18 +40,7 @@ def validate_interview_types(interview_types: list) -> dict:
 
 
 def validate_parsed_resume(parsed_resume: dict) -> dict:
-    """
-    Validates that a parsed resume exists and has the minimum required fields.
-    This acts as the 'gate' for Mode 2 (Interview Only) — resume must be
-    parsed before interview can start.
-
-    Parameters:
-        parsed_resume (dict): The dict returned by parse_resume().
-
-    Returns:
-        dict: {"valid": True} if the resume is usable.
-              {"valid": False, "error": "..."} if not.
-    """
+    """Validates a parsed resume exists and has minimum required fields."""
     if not parsed_resume or not isinstance(parsed_resume, dict):
         return {"valid": False, "error": "Resume must be uploaded and parsed before starting an interview."}
 

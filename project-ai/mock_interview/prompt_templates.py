@@ -1,6 +1,4 @@
-"""
-prompt_templates.py — Prompts for the Mock Interview Module
-"""
+"""Prompt templates for mock interview question generation and answer evaluation."""
 
 GENERATE_QUESTIONS_PROMPT = """
 You are an expert technical interviewer conducting a {interview_type} interview for a "{role_title}" position.

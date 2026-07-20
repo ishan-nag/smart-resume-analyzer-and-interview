@@ -1,31 +1,5 @@
-"""
-prompt_templates.py — Prompt Templates for Resume Analyzer
-===========================================================
-This module contains all prompt strings used by resume_analyzer.py
-to perform LLM-based resume analysis via the Groq API.
+"""Prompt templates for combined resume analysis and upgrade tip generation."""
 
-Keeping prompts separate from logic makes it easy to:
-    - Tweak evaluation criteria without touching analyzer logic
-    - Review and improve prompts independently
-    - Add new prompt types in the future
-
-This module contains TWO prompts:
-
-    1. get_combined_analysis_prompt()
-       — Used by analyze_resume() for ONE LLM call per role.
-       — Batches ATS scoring + section feedback + quality score
-         into a single prompt to minimize API calls.
-
-    2. get_upgrade_tip_prompt()
-       — Used by generate_upgrade_tip() for ONE LLM call total.
-       — Takes all role results together and returns a single
-         consolidated upgrade tip paragraph for the candidate.
-"""
-
-
-# ─────────────────────────────────────────────
-# PROMPT 1: Combined Analysis (1 call per role)
-# ─────────────────────────────────────────────
 
 def get_combined_analysis_prompt(
     parsed_resume: dict,
@@ -34,102 +8,13 @@ def get_combined_analysis_prompt(
     required_skills: list,
     nice_to_have_skills: list
 ) -> str:
-    """
-    Returns a single combined prompt that asks Groq to evaluate the
-    resume against a specific job role across ALL dimensions at once.
-
-    This single prompt replaces what would otherwise be multiple
-    separate LLM calls. It batches:
-        - ATS scoring   (semantic, experience, education match)
-        - Skills gap    (matched vs missing required and nice-to-have skills)
-        - Quality score (format, clarity, impact, brevity)
-        - Section feedback (experience, education, summary, skills sections)
-
-    Called by: resume_analyzer.analyze_resume()
-    API calls: 1 per role
-
-    Parameters:
-        parsed_resume (dict):
-            The structured resume dict from resume_parser.
-            Keys used: raw_text, experience, education, summary, skills
-
-        job_description (str):
-            The plain text job description built by
-            job_roles.build_job_description() for the target role.
-
-        role_title (str):
-            Display name of the role. Example: "Machine Learning Engineer"
-            Used inside the prompt so the LLM knows which role to evaluate for.
-
-        required_skills (list):
-            List of required skills for the role from job_roles.json.
-            Example: ["python", "pytorch", "docker"]
-
-        nice_to_have_skills (list):
-            List of nice-to-have skills for the role from job_roles.json.
-            Example: ["kubernetes", "mlflow"]
-
-    Returns:
-        str: A formatted prompt string ready to send to the Groq API.
-
-    Expected LLM response format (JSON):
-        {
-            "ats": {
-                "overall_score":  78,
-                "recommendation": "Good Match",
-                "breakdown": {
-                    "semantic_match":   {"score": 80, "feedback": "..."},
-                    "experience_match": {"score": 70, "feedback": "..."},
-                    "education_match":  {"score": 85, "feedback": "..."}
-                }
-            },
-            "quality_score": {
-                "overall": 72,
-                "breakdown": {
-                    "format":  75,
-                    "clarity": 70,
-                    "impact":  68,
-                    "brevity": 80
-                }
-            },
-            "section_feedback": {
-                "experience": {
-                    "score":        75,
-                    "feedback":     "Good range of projects but bullet points lack metrics.",
-                    "improvements": ["Add quantifiable achievements", "Use action verbs"]
-                },
-                "education": {
-                    "score":        90,
-                    "feedback":     "Degree is well-aligned with the role.",
-                    "improvements": []
-                },
-                "summary": {
-                    "score":        60,
-                    "feedback":     "Summary is generic and does not highlight key strengths.",
-                    "improvements": ["Tailor summary to ML roles", "Mention top tools"]
-                },
-                "skills": {
-                    "score":        80,
-                    "feedback":     "Strong core skills listed.",
-                    "improvements": ["Add MLflow and Kubernetes to skills section"]
-                }
-            }
-        }
-
-    Note:
-        skills_gap is NOT part of the LLM prompt — it is computed
-        separately in resume_analyzer.py using regex matching
-        (zero API calls). Only ats, quality_score, and section_feedback
-        come from this LLM call.
-    """
-    # Extract fields from parsed_resume for the prompt
+    """Returns a single combined prompt for ATS scoring, quality score, and section feedback."""
     raw_text   = parsed_resume.get("raw_text", "")
     experience = parsed_resume.get("experience", "")
     education  = parsed_resume.get("education", "")
     summary    = parsed_resume.get("summary", "")
     skills     = parsed_resume.get("skills", [])
 
-    # Fallbacks if sections are empty
     if not experience.strip():
         experience = raw_text
     if not education.strip():
@@ -232,66 +117,25 @@ The JSON must have exactly this structure:
 """
 
 
-# ─────────────────────────────────────────────
-# PROMPT 2: Upgrade Tip (1 call total, after all roles)
-# ─────────────────────────────────────────────
-
 def get_upgrade_tip_prompt(
     parsed_resume: dict,
     all_role_results: list
 ) -> str:
-    """
-    Returns a prompt that asks Groq to generate a single consolidated
-    resume upgrade tip paragraph based on results across all analyzed roles.
-
-    Called ONCE by resume_analyzer.generate_upgrade_tip() after all
-    analyze_resume() calls are complete. This is the final LLM call
-    in the entire pipeline.
-
-    Called by: resume_analyzer.generate_upgrade_tip()
-    API calls: 1 total (called once, not per role)
-
-    Parameters:
-        parsed_resume (dict):
-            The structured resume dict from resume_parser.
-            Keys used: name, skills, summary
-
-        all_role_results (list):
-            List of dicts — one per role — as returned by analyze_resume().
-            Each dict contains: role, ats, skills_gap, quality_score,
-            section_feedback.
-            Used to identify cross-role patterns in weaknesses.
-
-    Returns:
-        str: A formatted prompt string ready to send to the Groq API.
-
-    Expected LLM response format (JSON):
-        {
-            "upgrade_tip": "Your resume shows strong Python fundamentals
-                            across all roles but consistently lacks cloud
-                            and deployment skills like Docker and Kubernetes.
-                            Adding these to your experience section with
-                            concrete project examples would significantly
-                            improve your ATS scores across Data & AI and
-                            Infrastructure roles."
-        }
-    """
-    candidate_name   = parsed_resume.get("name", "The candidate")
-    candidate_skills = parsed_resume.get("skills", [])
+    """Returns a prompt for generating a consolidated resume upgrade tip from all role results."""
+    candidate_name    = parsed_resume.get("name", "The candidate")
+    candidate_skills  = parsed_resume.get("skills", [])
     candidate_summary = parsed_resume.get("summary", "")
 
-    # Build a compact summary of each role's results for the prompt
     role_summaries = []
     for result in all_role_results:
-        # Skip failed role results
         if "error" in result:
             continue
 
-        role_title   = result.get("role", {}).get("title", "Unknown Role")
-        ats_score    = result.get("ats", {}).get("overall_score", 0)
-        missing      = result.get("skills_gap", {}).get("missing", [])
-        nth_missing  = result.get("skills_gap", {}).get("nice_to_have_missing", [])
-        quality      = result.get("quality_score", {}).get("overall", 0)
+        role_title  = result.get("role", {}).get("title", "Unknown Role")
+        ats_score   = result.get("ats", {}).get("overall_score", 0)
+        missing     = result.get("skills_gap", {}).get("missing", [])
+        nth_missing = result.get("skills_gap", {}).get("nice_to_have_missing", [])
+        quality     = result.get("quality_score", {}).get("overall", 0)
 
         role_summaries.append(
             f"- {role_title}: ATS Score={ats_score}/100, Quality={quality}/100, "

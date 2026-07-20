@@ -1,53 +1,9 @@
-"""
-resume_parser.py — Main Resume Parser Module
-=============================================
-This module parses a PDF resume and extracts structured information
-using a two-step approach:
-
-    Step 1 — Regex (utils.py):
-        Extracts contact fields that follow universal formats:
-        email, phone, linkedin, github
-
-    Step 2 — Groq LLM:
-        Extracts fields that vary by resume format and layout:
-        name, skills, education, experience, summary
-
-        Using LLM here makes the parser robust to ANY resume format:
-        - Spaced headers (E D U C A T I O N)
-        - Two-column layouts
-        - Non-standard section names (Work History, Background, etc.)
-        - International resumes
-        - Creative/design resumes
-
-Output format:
-    A Python dictionary (easily serializable to JSON):
-    {
-        "name":        str,
-        "email":       str,
-        "phone":       str,
-        "linkedin":    str,
-        "github":      str,
-        "skills":      list[str],
-        "education":   str,
-        "experience":  str,
-        "summary":     str,
-        "raw_text":    str
-    }
-
-For backend integration (Java Spring Boot):
-    - Call parse_resume(pdf_path) with the path to the uploaded PDF
-    - Returns a dict → serialize with json.dumps() to send as JSON
-    - Optionally call save_parsed_resume(result, output_path) to persist
-
-Dependencies:
-    pip install groq python-dotenv pdfplumber
-"""
+"""Parses PDF resumes using regex for contacts and Groq LLM for structured fields."""
 
 import os
 import json
 import pdfplumber
 
-# ── Regex-based contact extractors ──
 from resume_parser.utils import (
     extract_email,
     extract_phone,
@@ -55,27 +11,12 @@ from resume_parser.utils import (
     extract_github,
 )
 
-# ── Shared Groq client and retry handler ──
 from shared.groq_client import get_groq_client, MODEL_CONFIGS
 from shared.retry_handler import call_with_retry, parse_json_response
 
 
-# PDF Text Extraction
-
 def extract_text_from_pdf(pdf_path: str) -> str:
-    """
-    Extracts raw plain text from a PDF file using pdfplumber.
-
-    Parameters:
-        pdf_path (str): Path to the PDF resume file.
-
-    Returns:
-        str: All text extracted from every page, joined by newlines.
-             Returns an empty string if extraction fails.
-
-    Example:
-        text = extract_text_from_pdf("data/sample_resume.pdf")
-    """
+    """Extracts raw text from a PDF using pdfplumber. Returns empty string on failure."""
     all_text = []
     try:
         with pdfplumber.open(pdf_path) as pdf:
@@ -89,27 +30,8 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     return '\n'.join(all_text)
 
 
-# LLM-Based Field Extraction
-
 def extract_fields_with_llm(raw_text: str) -> dict:
-    """
-    Uses Groq LLM to extract structured fields from raw resume text.
-    This handles any resume format, layout, or style generically.
-
-    Fields extracted by LLM:
-        - name       : candidate's full name
-        - skills     : list of technical and soft skills
-        - education  : education background summary
-        - experience : work experience summary
-        - summary    : professional summary or objective
-
-    Parameters:
-        raw_text (str): Raw text extracted from the PDF.
-
-    Returns:
-        dict: Extracted fields as a Python dict.
-              Returns empty strings/lists on failure.
-    """
+    """Uses Groq LLM to extract name, skills, education, experience, and summary from resume text."""
 
     prompt = f"""You are an expert resume parser.
 
@@ -141,11 +63,11 @@ The JSON must have exactly these keys: name, skills, education, experience, summ
         print(f"[ResumeParser] {e}")
         return _empty_llm_fields()
 
-    config = MODEL_CONFIGS["question_generator"]  # reuse similar config
+    config = MODEL_CONFIGS["question_generator"]
 
     raw_response = call_with_retry(
-        client       = client,
-        messages     = [
+        client=client,
+        messages=[
             {
                 "role": "system",
                 "content": (
@@ -159,10 +81,10 @@ The JSON must have exactly these keys: name, skills, education, experience, summ
                 "content": prompt
             }
         ],
-        model        = config["model"],
-        temperature  = 0.1,     # Very low — we want consistent, factual extraction
-        max_tokens   = 2048,    # Resumes can be long
-        caller_label = "ResumeParser:LLM",
+        model=config["model"],
+        temperature=0.1,
+        max_tokens=2048,
+        caller_label="ResumeParser:LLM",
     )
 
     result = parse_json_response(raw_response, "ResumeParser:LLM")
@@ -171,7 +93,6 @@ The JSON must have exactly these keys: name, skills, education, experience, summ
         print("[ResumeParser] WARNING: LLM extraction failed. Returning empty fields.")
         return _empty_llm_fields()
 
-    # ── Sanitize and return ──
     return {
         "name":       str(result.get("name", "")).strip(),
         "skills":     [s.lower().strip() for s in result.get("skills", []) if s],
@@ -192,76 +113,26 @@ def _empty_llm_fields() -> dict:
     }
 
 
-#Main Parse Function
-
 def parse_resume(pdf_path: str) -> dict:
-    """
-    Main function to parse a resume PDF and extract structured information.
-    This is the PRIMARY function the backend should call.
-
-    Uses a two-step approach:
-        1. Regex   → extracts email, phone, linkedin, github (fast, no API call)
-        2. Groq LLM → extracts name, skills, education, experience, summary
-                      (robust, works on any resume format)
-
-    Parameters:
-        pdf_path (str):
-            Path to the uploaded PDF resume file.
-            Example: "data/sample_resume.pdf" or "/uploads/resume_john.pdf"
-
-    Returns:
-        dict: A structured dictionary containing all extracted resume fields.
-
-        Example return value:
-        {
-            "name":       "John Doe",
-            "email":      "john.doe@gmail.com",
-            "phone":      "+91 9876543210",
-            "linkedin":   "linkedin.com/in/johndoe",
-            "github":     "github.com/johndoe",
-            "skills":     ["docker", "java", "python", "spring boot"],
-            "education":  "B.Tech in Computer Science, XYZ University, 2024",
-            "experience": "Software Intern at ABC Corp, June 2023 – Aug 2023",
-            "summary":    "Results-driven software engineer with 2 years of experience...",
-            "raw_text":   "John Doe\njohn.doe@gmail.com\n..."
-        }
-
-        On failure, returns:
-        {
-            "error": "Reason for failure"
-        }
-
-    Example usage (Python):
-        from resume_parser.resume_parser import parse_resume
-
-        result = parse_resume("data/sample_resume.pdf")
-        print(result["skills"])    # ["python", "react", ...]
-        print(result["email"])     # "john@example.com"
-    """
-
-    # ── Step 1: Validate file ──
+    """Main function: parses a PDF resume using regex (contacts) and Groq LLM (structured fields)."""
     if not os.path.exists(pdf_path):
         return {"error": f"File not found: {pdf_path}"}
 
-    # ── Step 2: Extract raw text from PDF ──
     print(f"[ResumeParser] Extracting text from: {pdf_path}")
     raw_text = extract_text_from_pdf(pdf_path)
 
     if not raw_text.strip():
         return {"error": "Could not extract text. File may be scanned or image-based."}
 
-    # ── Step 3: Regex extraction (contact info) ──
     print("[ResumeParser] Extracting contact info via regex...")
     email    = extract_email(raw_text)
     phone    = extract_phone(raw_text)
     linkedin = extract_linkedin(raw_text)
     github   = extract_github(raw_text)
 
-    # ── Step 4: LLM extraction (all other fields) ──
     print("[ResumeParser] Extracting resume fields via Groq LLM...")
     llm_fields = extract_fields_with_llm(raw_text)
 
-    # ── Step 5: Combine all fields ──
     parsed_data = {
         "name":       llm_fields["name"],
         "email":      email,
@@ -279,47 +150,19 @@ def parse_resume(pdf_path: str) -> dict:
     return parsed_data
 
 
-# Save Output to JSON
-
 def save_parsed_resume(parsed_data: dict, output_path: str = "output/parsed_resume.json") -> None:
-    """
-    Saves the parsed resume dictionary to a JSON file.
-
-    Parameters:
-        parsed_data (dict): The structured resume data returned by parse_resume().
-        output_path (str):  Path where the JSON file should be saved.
-                            Defaults to "output/parsed_resume.json"
-
-    Returns:
-        None
-
-    Example usage:
-        result = parse_resume("data/sample_resume.pdf")
-        save_parsed_resume(result, "output/parsed_resume.json")
-    """
+    """Saves the parsed resume dictionary to a JSON file."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(parsed_data, f, indent=4, ensure_ascii=False)
     print(f"[ResumeParser] Parsed resume saved to: {output_path}")
 
 
-# Test
-
 if __name__ == "__main__":
-    """
-    Quick test — run this file directly to verify the parser works.
-
-    Usage (from project root):
-        python -m resume_parser.resume_parser
-
-    Make sure:
-        - .env file has GROQ_API_KEY set
-        - data/ folder has at least one sample_resume*.pdf file
-    """
+    """Quick test — run this file directly to verify the parser works."""
     import glob
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    # ── Auto-detect all PDFs in data/ folder ──
     pdf_files = sorted(glob.glob("data/sample_resume*.pdf"))
 
     if not pdf_files:
@@ -350,7 +193,6 @@ if __name__ == "__main__":
             print(f"  experience : {result['experience'][:150]}..." if result['experience'] else "  experience : ")
             print(f"  raw_text   : [truncated, {len(result['raw_text'])} characters]")
 
-            # Save with matching filename
             base_name   = os.path.splitext(os.path.basename(pdf_path))[0]
             output_name = base_name.replace("sample_resume", "parsed_resume")
             output_path = f"output/{output_name}.json"

@@ -1,20 +1,4 @@
-"""
-prompt_templates.py — Prompt Templates for ATS Scorer
-======================================================
-This module contains all prompt strings used by ats_scorer.py
-to perform LLM-based semantic scoring via the Groq API.
-
-Keeping prompts separate from logic makes it easy to:
-    - Tweak scoring criteria without touching scorer logic
-    - Add new scoring categories in the future
-    - Review and improve prompts independently
-
-OPTIMIZATION NOTE:
-    Previously used 3 separate prompts (semantic, experience, education)
-    requiring 3 separate Groq API calls. Now merged into a single prompt
-    that returns all 3 scores in one JSON response — saving 2 API calls
-    per session.
-"""
+"""Prompt templates for ATS scoring via Groq LLM."""
 
 
 def get_combined_llm_scores_prompt(
@@ -23,39 +7,7 @@ def get_combined_llm_scores_prompt(
     education_text: str,
     job_description: str
 ) -> str:
-    """
-    Returns a single combined prompt that asks Groq to evaluate
-    semantic match, experience match, and education match all at once.
-
-    This replaces the 3 separate prompts (get_semantic_match_prompt,
-    get_experience_match_prompt, get_education_match_prompt) and reduces
-    Groq API calls from 3 to 1 per ATS scoring session.
-
-    Parameters:
-        resume_text (str):      Full raw text of the candidate's resume.
-        experience_text (str):  Work experience section from the resume.
-        education_text (str):   Education section from the resume.
-        job_description (str):  Full text of the job description.
-
-    Returns:
-        str: A formatted prompt string for the Groq API.
-
-    Expected LLM response format (JSON):
-        {
-            "semantic_match": {
-                "score": 78,
-                "reason": "Strong backend experience but lacks cloud skills."
-            },
-            "experience_match": {
-                "score": 70,
-                "reason": "2 years of relevant experience, role requires 3-5 years."
-            },
-            "education_match": {
-                "score": 90,
-                "reason": "B.Tech in Computer Science matches the requirement."
-            }
-        }
-    """
+    """Returns a single combined prompt for semantic, experience, and education match scoring."""
     return f"""You are an expert ATS (Applicant Tracking System) evaluator and recruiter.
 
 Evaluate the candidate's resume against the job description across three dimensions

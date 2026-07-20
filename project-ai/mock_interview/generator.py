@@ -1,6 +1,4 @@
-"""
-generator.py — Mock Interview Question Generator
-"""
+"""Generates mock interview questions using Groq LLM based on resume and role."""
 
 import json
 import uuid
@@ -10,21 +8,7 @@ from job_roles.job_roles import get_role_by_id
 from mock_interview.prompt_templates import GENERATE_QUESTIONS_PROMPT
 
 def generate_interview_questions(parsed_resume: dict, role_id: str, interview_type: str) -> dict:
-    """
-    Generates 5 interview questions based on the candidate's resume, the role, and the interview type.
-    
-    Parameters:
-        parsed_resume: Dictionary containing at least "skills" and "summary" / "experience".
-        role_id: The ID of the role (e.g. "ml_engineer").
-        interview_type: One of "behavioural", "technical", or "domain-specific".
-        
-    Returns:
-        A dict containing:
-        - "status": "success" or "error"
-        - "questions": A list of 5 string questions (if success)
-        - "error": Description (if error)
-    """
-    # 1. Fetch role details
+    """Generates 5 interview questions based on resume, role, and interview type."""
     role = get_role_by_id(role_id)
     if not role or "error" in role:
         return {"status": "error", "error": f"Role '{role_id}' not found."}
@@ -35,7 +19,6 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
     if not role_required_skills:
         role_required_skills = "Not specified"
     
-    # 2. Extract Candidate Info
     skills = ", ".join(parsed_resume.get("skills", []))
     if not skills:
         skills = "Not explicitly stated"
@@ -44,23 +27,19 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
     if not experience:
         experience = parsed_resume.get("summary", "Not provided")
         
-    # 3. Format Prompt
     prompt = GENERATE_QUESTIONS_PROMPT.format(
         interview_type=interview_type,
         role_title=role_title,
         role_description=role_description[:1000],
         role_required_skills=role_required_skills,
         skills=skills,
-        experience=experience[:1500]  # truncate to save context limit just in case
+        experience=experience[:1500]
     )
     
-    # 3.5 Inject Mathematics Randomness to break LLM Determinism
-    # Even at high temperatures, LLMs repeat if inputs are identical. This forces uniqueness.
     random_hash = str(uuid.uuid4())
     prompt += f"\n\n[SYSTEM ENFORCEMENT - RANDOM SEED: {random_hash}]\n"
     prompt += "Do NOT give predictable or standard questions. Pick obscure, highly specific, or creative angles based on the ROLE REQUIREMENTS to ensure this test is wildly different from average."
     
-    # 4. Call LLM
     client = get_groq_client()
     config = MODEL_CONFIGS.get("question_generator", {"model": "llama-3.3-70b-versatile", "temperature": 0.7, "max_tokens": 1024})
     
@@ -76,7 +55,6 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
         caller_label=f"InterviewGenerator-{interview_type}"
     )
     
-    # 5. Parse Response
     result = parse_json_response(response_text, caller_label=f"InterviewGenerator-{interview_type}")
     
     if not result or "questions" not in result:
@@ -84,5 +62,5 @@ def generate_interview_questions(parsed_resume: dict, role_id: str, interview_ty
         
     return {
         "status": "success",
-        "questions": result["questions"][:5]  # Ensure exactly 5
+        "questions": result["questions"][:5]
     }

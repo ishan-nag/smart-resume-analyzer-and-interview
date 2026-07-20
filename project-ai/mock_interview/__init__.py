@@ -1,6 +1,4 @@
-"""
-Mock Interview Module
-"""
+"""Exposes generate_interview_questions and evaluate_interview_answers."""
 
 from .generator import generate_interview_questions
 from .evaluator import evaluate_interview_answers

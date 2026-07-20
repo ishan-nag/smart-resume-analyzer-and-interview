@@ -1,3 +1,5 @@
+"""Main FastAPI application for the Smart Resume Analyzer API."""
+
 import os
 import shutil
 from typing import List, Dict, Any
@@ -5,7 +7,6 @@ from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Import existing AI modules
 from resume_parser.resume_parser import parse_resume
 from job_roles.job_roles import get_all_roles
 from shared.validators import validate_role_selection, validate_interview_types
@@ -13,14 +14,12 @@ from resume_analyzer.resume_analyzer import analyze_resume, generate_upgrade_tip
 from mock_interview.generator import generate_interview_questions
 from mock_interview.evaluator import evaluate_interview_answers
 
-# Initialize FastAPI App
 app = FastAPI(
     title="Smart Resume Analyzer API",
     description="AI backend for Resume Analysis and Mock Interviews",
     version="1.0.0"
 )
 
-# Enable CORS for all domains so the Frontend/Backend devs can easily connect to it locally
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -28,10 +27,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ==========================================
-# Data Models (Pydantic) for stricter validation
-# ==========================================
 
 class AnalyzeRequest(BaseModel):
     parsed_resume: Dict[str, Any]
@@ -50,9 +45,6 @@ class InterviewEvaluateRequest(BaseModel):
     role_id: str
     submitted_answers: Dict[str, List[QuestionAnswerPair]]
 
-# ==========================================
-# Endpoint 1: Upload Resume
-# ==========================================
 @app.post("/api/upload")
 async def upload_resume(file: UploadFile = File(...)):
     """Uploads a PDF resume, parses its text, and extracts skills."""
@@ -73,17 +65,11 @@ async def upload_resume(file: UploadFile = File(...)):
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
-# ==========================================
-# Endpoint 2: Get Available Roles
-# ==========================================
 @app.get("/api/roles")
 async def get_roles():
     """Returns the list of 28 available technical roles."""
     return {"roles": get_all_roles()}
 
-# ==========================================
-# Endpoint 3: Analyze Resume
-# ==========================================
 @app.post("/api/analyze")
 async def analyze(request: AnalyzeRequest):
     """Analyzes a parsed resume against up to 3 chosen job roles."""
@@ -97,7 +83,6 @@ async def analyze(request: AnalyzeRequest):
         if "error" not in result:
             all_role_results.append(result)
         else:
-            # Safely handle bad role inputs (like "string") by returning a 400 Bad Request
             raise HTTPException(status_code=400, detail=f"Analysis failed: {result['error']}")
             
     if not all_role_results:
@@ -111,9 +96,6 @@ async def analyze(request: AnalyzeRequest):
         "upgrade_tip": tip_result.get("upgrade_tip", "")
     }
 
-# ==========================================
-# Endpoint 4: Generate Mock Interview Questions
-# ==========================================
 @app.post("/api/interview/generate")
 async def generate_interview(request: InterviewGenerateRequest):
     """Generates 5 interview questions per selected interview type."""
@@ -140,9 +122,6 @@ async def generate_interview(request: InterviewGenerateRequest):
         "sequential_questions": sequential_list
     }
 
-# ==========================================
-# Endpoint 5: Evaluate Interview Answers
-# ==========================================
 @app.post("/api/interview/evaluate")
 async def evaluate_interview(request: InterviewEvaluateRequest):
     """Evaluates all candidate answers at the end of the interview."""

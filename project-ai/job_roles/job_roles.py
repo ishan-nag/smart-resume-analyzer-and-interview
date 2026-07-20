@@ -1,47 +1,11 @@
-"""
-job_roles.py — Job Roles Data Module
-=====================================
-This module loads and serves job role data from data/job_roles.json.
-
-Responsibilities:
-    - Load the 28 job roles from the JSON file once at import time
-    - Provide clean functions to query roles by ID or get a full list
-    - Convert role dicts into plain job description strings for LLM prompts
-
-IMPORTANT:
-    - Zero API calls — this module only reads a local JSON file
-    - All functions return plain Python dicts or strings (JSON-serializable)
-    - The backend should call get_all_roles() to populate frontend dropdowns
-    - The backend should call get_role_by_id() before calling analyze_resume()
-
-For backend integration (Java Spring Boot):
-    - Call get_all_roles()           → send to frontend for dropdown
-    - Call get_role_by_id(role_id)   → verify a role exists before analysis
-    - build_job_description() is used internally by ats_scorer and resume_analyzer
-      — the backend does NOT need to call this directly
-
-Dependencies:
-    None — standard library only (json, os)
-"""
+"""Loads and serves job role data from data/job_roles.json."""
 
 import os
 import json
 
 
-# ─────────────────────────────────────────────
-# SECTION: Load JSON Data
-# ─────────────────────────────────────────────
-
 def _load_job_roles() -> list:
-    """
-    Loads all job roles from data/job_roles.json.
-    Called once at module level — not called again after that.
-
-    Returns:
-        list: A list of role dicts loaded from the JSON file.
-              Returns an empty list if the file is missing or malformed.
-    """
-    # Build path relative to project-ai/ root
+    """Loads all job roles from data/job_roles.json. Returns list of role dicts."""
     base_dir   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     roles_path = os.path.join(base_dir, "data", "job_roles.json")
 
@@ -57,49 +21,12 @@ def _load_job_roles() -> list:
     return roles
 
 
-# Load once when the module is first imported
 _ALL_ROLES: list = _load_job_roles()
-
-# Build a lookup dict keyed by role id for O(1) access
 _ROLES_BY_ID: dict = {role["id"]: role for role in _ALL_ROLES}
 
 
-# ─────────────────────────────────────────────
-# SECTION: Public Functions
-# ─────────────────────────────────────────────
-
 def get_all_roles() -> list:
-    """
-    Returns a lightweight list of all 28 job roles.
-    Designed for the frontend dropdown — does NOT include
-    required_skills or nice_to_have_skills to keep payload small.
-
-    Parameters:
-        None
-
-    Returns:
-        list of dicts, each containing:
-            - id               (str)  — unique role identifier, e.g. "ml_engineer"
-            - title            (str)  — display name, e.g. "Machine Learning Engineer"
-            - category         (str)  — group name, e.g. "Data & AI"
-            - experience_level (str)  — e.g. "Mid-level", "Senior", "Entry-level"
-
-    Example return value:
-        [
-            {
-                "id":               "ml_engineer",
-                "title":            "Machine Learning Engineer",
-                "category":         "Data & AI",
-                "experience_level": "Mid-level"
-            },
-            ...
-        ]
-
-    Example usage:
-        from job_roles.job_roles import get_all_roles
-        roles = get_all_roles()
-        # Pass roles list to frontend for the role selection dropdown
-    """
+    """Returns lightweight list of all roles (id, title, category, experience_level) for frontend dropdowns."""
     return [
         {
             "id":               role["id"],
@@ -112,30 +39,7 @@ def get_all_roles() -> list:
 
 
 def get_role_by_id(role_id: str) -> dict:
-    """
-    Returns the full role dict for a given role ID.
-    Includes required_skills, nice_to_have_skills, and description.
-
-    Parameters:
-        role_id (str): The unique role identifier string.
-                       Example: "ml_engineer", "frontend_engineer"
-
-    Returns:
-        dict: Full role dictionary with all fields:
-            - id, title, category, experience_level
-            - description          (str)
-            - required_skills      (list of str)
-            - nice_to_have_skills  (list of str)
-
-        If the role_id is not found, returns:
-            {"error": "Role not found: <role_id>"}
-
-    Example usage:
-        from job_roles.job_roles import get_role_by_id
-        role = get_role_by_id("ml_engineer")
-        if "error" not in role:
-            print(role["required_skills"])
-    """
+    """Returns full role dict for a given role ID, or error dict if not found."""
     role = _ROLES_BY_ID.get(role_id)
 
     if role is None:
@@ -145,41 +49,7 @@ def get_role_by_id(role_id: str) -> dict:
 
 
 def build_job_description(role: dict) -> str:
-    """
-    Converts a role dict into a plain text job description string.
-    Used internally by ats_scorer and resume_analyzer as LLM prompt input.
-    The backend does NOT need to call this directly.
-
-    Parameters:
-        role (dict): A full role dict as returned by get_role_by_id().
-                     Must contain: title, description,
-                                   required_skills, nice_to_have_skills.
-
-    Returns:
-        str: A formatted job description string ready for LLM prompts.
-
-        Returns an empty string if the role dict is empty or has an error key.
-
-    Example return value:
-        \"\"\"
-        Job Title: Machine Learning Engineer
-
-        About the Role:
-        Build, train, and deploy machine learning models at scale...
-
-        Required Skills:
-        python, pytorch, tensorflow, scikit-learn, docker...
-
-        Nice to Have:
-        kubernetes, mlflow, airflow...
-        \"\"\"
-
-    Example usage:
-        from job_roles.job_roles import get_role_by_id, build_job_description
-        role = get_role_by_id("ml_engineer")
-        jd   = build_job_description(role)
-        # Pass jd string to score_resume() or analyze_resume()
-    """
+    """Converts a role dict into a plain text job description string for LLM prompts."""
     if not role or "error" in role:
         return ""
 
@@ -203,10 +73,6 @@ Nice to Have:
 """
     return jd
 
-
-# ─────────────────────────────────────────────
-# SECTION: Quick Test
-# ─────────────────────────────────────────────
 
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
